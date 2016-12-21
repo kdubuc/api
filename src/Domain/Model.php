@@ -6,7 +6,7 @@ use Exception;
 use API\Domain\Message\Event;
 use API\Domain\ValueObject\ID;
 
-abstract class Model extends ID
+abstract class Model
 {
     protected $id;
     protected $events = [];
