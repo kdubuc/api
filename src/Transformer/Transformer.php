@@ -16,9 +16,9 @@ abstract class Transformer extends FractalTransformer
      * @param TransformerAbstract|callable $transformer
      * @param string                       $resourceKey
      *
-     * @return Item
+     * @return array
      */
-    protected function item($data, $transformer, $resourceKey = null)
+    protected function item($data, $transformer, $resourceKey = null) : array
     {
         $manager = $this->getContainer()->get('fractal');
 
@@ -34,9 +34,9 @@ abstract class Transformer extends FractalTransformer
      * @param TransformerAbstract|callable $transformer
      * @param string                       $resourceKey
      *
-     * @return Collection
+     * @return array
      */
-    protected function collection($data, $transformer, $resourceKey = null)
+    protected function collection($data, $transformer, $resourceKey = null) : array
     {
         $manager = $this->getContainer()->get('fractal');
 
