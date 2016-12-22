@@ -138,8 +138,7 @@ class Kernel extends Pimple implements Container
             'notFoundHandler'   => 'callable',
             'notAllowedHandler' => 'callable',
             'callableResolver'  => 'Slim\CallableResolver',
-            'phpErrorHandler'   => 'callable',
-            'orm'               => 'Doctrine\ORM\EntityManager',
+            'phpErrorHandler'   => 'callable'
         ];
     }
 }
