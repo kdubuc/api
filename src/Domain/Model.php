@@ -5,9 +5,12 @@ namespace API\Domain;
 use Exception;
 use API\Domain\Message\Event;
 use API\Domain\ValueObject\ID;
+use API\Feature\MagicMessageHandler;
 
 abstract class Model
 {
+    use MagicMessageHandler;
+
     protected $id;
     protected $events = [];
 
@@ -58,11 +61,7 @@ abstract class Model
      */
     public function applyEvent(Event $event) : self
     {
-        $method_name = 'apply'.$event->getShortName();
-
-        if (method_exists($this, $method_name)) {
-            $this->$method_name($event);
-        }
+        $this->handleMagically($event, 'apply');
 
         return $this;
     }

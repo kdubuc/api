@@ -13,6 +13,6 @@ abstract class Handler extends BaseHandler
      */
     public function handle(Query $query)
     {
-        return $this($query);
+        return $this->handleMagically($query);
     }
 }

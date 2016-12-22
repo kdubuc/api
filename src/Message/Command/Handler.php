@@ -13,6 +13,6 @@ class Handler extends BaseHandler
      */
     public function handle(Command $command)
     {
-        $this($command);
+        $this->handleMagically($command);
     }
 }

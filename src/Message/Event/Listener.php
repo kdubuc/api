@@ -13,6 +13,6 @@ abstract class Listener extends Handler
      */
     public function handle(Event $event)
     {
-        $this($event);
+        $this->handleMagically($event);
     }
 }
