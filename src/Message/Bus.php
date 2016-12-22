@@ -2,6 +2,7 @@
 
 namespace API\Message;
 
+use API\Feature\ContainerAccess;
 use Interop\Container\ContainerInterface as Container;
 use League\Tactician\CommandBus as TacticianBus;
 use League\Tactician\Exception\MissingHandlerException;
@@ -13,13 +14,17 @@ use ReflectionParameter;
 
 class Bus extends TacticianBus
 {
+    use ContainerAccess;
+
     /**
      * Build the bus.
      *
+     * @param Interop\Container\ContainerInterface $container
      * @param Middleware[] $middlewares
      */
-    public function __construct(array $middlewares = [])
+    public function __construct(Container $container, array $middlewares = [])
     {
+        $this->container           = $container;
         $this->init                = false;
         $this->middlewares         = $middlewares;
         $this->locator             = new InMemoryLocator();
@@ -74,10 +79,9 @@ class Bus extends TacticianBus
     /**
      * Subscribes the handler to this bus.
      *
-     * @param string                               $handler
-     * @param Interop\Container\ContainerInterface $container
+     * @param string $handler
      */
-    public function subscribe(string $handler, Container $container)
+    public function subscribe(string $handler)
     {
         foreach (get_class_methods($handler) as $method) {
             if (strpos($method, 'handle') === 0) {
@@ -85,7 +89,7 @@ class Bus extends TacticianBus
 
                 $expected_message = $handle_parameter_reflection->getClass()->name;
 
-                $this->locator->addHandler(new $handler($container), $expected_message);
+                $this->locator->addHandler(new $handler($this->getContainer()), $expected_message);
             }
         }
     }
