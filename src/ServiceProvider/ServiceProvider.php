@@ -12,4 +12,11 @@ abstract class ServiceProvider
      * @param Interop\Container\ContainerInterface $container
      */
     abstract public function register(Container $app);
+
+    /**
+     * Get service definitions.
+     *
+     * @return array
+     */
+    abstract public function getDefinitions() : array;
 }

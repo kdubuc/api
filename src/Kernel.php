@@ -5,10 +5,11 @@ namespace API;
 use Exception;
 use Interop\Container\ContainerInterface as Container;
 use Slim\Container as Pimple;
-use Slim\DefaultServicesProvider;
 
 class Kernel extends Pimple implements Container
 {
+    private $definitions = [];
+
     /**
      * Create new kernel.
      *
@@ -20,13 +21,8 @@ class Kernel extends Pimple implements Container
         $values['settings']['displayErrorDetails'] = $values['debug'] === true;
 
         // Provide defaults services
+        $this->provide(new ServiceProvider\Slim());
         $this->provide(new ServiceProvider\Fractal());
-        $this->provide(new class() extends ServiceProvider\ServiceProvider {
-            public function register(Container $app)
-            {
-                (new DefaultServicesProvider())->register($app);
-            }
-        });
 
         // Continue the constructor
         parent::__construct($values);
@@ -64,6 +60,8 @@ class Kernel extends Pimple implements Container
     protected function provide(ServiceProvider\ServiceProvider $provider, array $values = []) : self
     {
         $provider->register($this);
+
+        $this->definitions = array_merge($this->definitions, $provider->getDefinitions());
 
         $this->fillWithValues($values);
 
@@ -123,22 +121,8 @@ class Kernel extends Pimple implements Container
      *
      * @return array
      */
-    protected function getDefinitions() : array
+    public function getDefinitions() : array
     {
-        return [
-            'debug'             => 'boolean',
-            'fractal'           => 'League\Fractal\Manager',
-            'settings'          => 'ArrayAccess',
-            'environment'       => 'Slim\Interfaces\Http\EnvironmentInterface',
-            'request'           => 'Psr\Http\Message\ServerRequestInterface',
-            'response'          => 'Psr\Http\Message\ResponseInterface',
-            'router'            => 'Slim\Interfaces\RouterInterface',
-            'foundHandler'      => 'Slim\Interfaces\InvocationStrategyInterface',
-            'errorHandler'      => 'callable',
-            'notFoundHandler'   => 'callable',
-            'notAllowedHandler' => 'callable',
-            'callableResolver'  => 'Slim\CallableResolver',
-            'phpErrorHandler'   => 'callable'
-        ];
+        return $this->definitions;
     }
 }

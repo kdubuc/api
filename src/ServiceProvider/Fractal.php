@@ -22,4 +22,16 @@ class Fractal extends ServiceProvider
             return $fractal;
         };
     }
+
+    /**
+     * Get service definitions.
+     *
+     * @return array
+     */
+    public function getDefinitions() : array
+    {
+        return [
+            'fractal' => FractalManager::class,
+        ];
+    }
 }
