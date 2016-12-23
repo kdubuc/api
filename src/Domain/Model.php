@@ -49,7 +49,9 @@ abstract class Model
      */
     public function getUncommittedEvents() : array
     {
-        return array_diff($this->events, $this->getCommittedEvents());
+        return array_filter($this->events, function ($event) {
+            return !$event->isCommitted();
+        });
     }
 
     /**
