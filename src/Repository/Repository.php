@@ -43,7 +43,7 @@ class Repository
      */
     public function get(ID $id) : Model
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('id', $id));
+        $criteria = Criteria::create()->where(Criteria::expr()->in('id', [$id]));
 
         $collection = $this->storage->select($this->class_name, $criteria);
 
@@ -89,7 +89,7 @@ class Repository
      */
     public function remove(Model $model) : Model
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('id', $model->getId()));
+        $criteria = Criteria::create()->where(Criteria::expr()->in('id', [$model->getId()]));
 
         $this->storage->delete($this->class_name, $criteria);
 
@@ -105,7 +105,7 @@ class Repository
      */
     public function contains(Model $model) : bool
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('id', $model->getId()));
+        $criteria = Criteria::create()->where(Criteria::expr()->in('id', [$model->getId()]));
 
         return empty($this->storage->select($this->class_name, $criteria));
     }
