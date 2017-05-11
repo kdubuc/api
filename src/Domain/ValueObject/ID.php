@@ -20,7 +20,7 @@ class ID extends ValueObject
     }
 
     /**
-     * Stringify the value object.
+     * Return the UUID.
      *
      * @return string
      */
@@ -30,15 +30,31 @@ class ID extends ValueObject
     }
 
     /**
-     * Unserialize value object.
+     * Convert the value object into an array.
      *
-     * @return API\Domain\ValueObject\ID
+     * @return array
      */
-    public static function fromString(string $serialized)
+    public function toArray() : array
+    {
+        return array_merge(parent::toArray(), [
+            'uuid' => $this->toString()
+        ]);
+    }
+
+    /**
+     * Build the value object from array.
+     *
+     * @return array $input
+     *
+     * @return API\Domain\ValueObject\ValueObject
+     */
+    public static function fromArray(array $input) : ValueObject
     {
         $factory = new UuidFactory();
 
-        return new self($factory->fromString($serialized));
+        $uuid = $factory->fromString($input['uuid']);
+
+        return new self($uuid);
     }
 
     /**
@@ -46,7 +62,7 @@ class ID extends ValueObject
      *
      * @return API\Domain\ValueObject\ID
      */
-    public static function generate() : ID
+    public static function generate() : self
     {
         return new self(Uuid::uuid4());
     }

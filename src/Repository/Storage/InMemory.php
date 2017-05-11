@@ -27,7 +27,7 @@ class InMemory implements Storage
      */
     public function insert(Model $model) : Model
     {
-        $this->data[get_class($model)][$model->getId()->toString()] = $model;
+        $this->data[get_class($model)][$model->getId()->toArray()['uuid']] = $model;
 
         return $model;
     }
