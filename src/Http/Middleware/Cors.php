@@ -17,7 +17,7 @@ class Cors extends Middleware
     public function __invoke(Request $request, Response $response, callable $next) : Response
     {
         $response = $response->withHeader('Access-Control-Allow-Origin', '*')
-            ->withHeader('Access-Control-Allow-Headers', 'content-type')
+            ->withHeader('Access-Control-Allow-Headers', 'content-type, Authorization')
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
 
         return $next($request, $response);
