@@ -17,6 +17,8 @@ class Kernel extends Pimple implements Container
      */
     public function __construct(array $values = [])
     {
+        $this->fillWithValues($values);
+
         // If the debug mode is activated, enable error details display.
         $values['settings']['displayErrorDetails'] = $values['debug'] === true;
 
@@ -26,9 +28,6 @@ class Kernel extends Pimple implements Container
 
         // Continue the constructor
         parent::__construct($values);
-
-        // Check kernel integrity
-        $this->checkIntegrity();
     }
 
     /**
