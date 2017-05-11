@@ -2,9 +2,11 @@
 
 namespace API\Domain;
 
+use JsonSerializable;
+use API\Domain\ValueObject\ValueObject;
 use Doctrine\Common\Collections\ArrayCollection;
 
-class Collection extends ArrayCollection
+class Collection extends ArrayCollection implements JsonSerializable
 {
     /**
      * Morph the collection into a new one.
@@ -20,5 +22,24 @@ class Collection extends ArrayCollection
         }
 
         return new $collection_class_name($this);
+    }
+
+    /**
+     * Implements JsonSerializable.
+     *
+     * @return array
+     */
+    public function jsonSerialize() : array
+    {
+        return array_map(function($element) {
+
+            if($element instanceof ValueObject) {
+                return $element->toArray();
+            }
+            else {
+                return $element;
+            }
+
+        }, $this->toArray());
     }
 }
