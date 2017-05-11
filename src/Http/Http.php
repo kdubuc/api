@@ -100,6 +100,12 @@ abstract class Http
     {
         $resource = new Fractal\Resource\Collection($collection->toArray(), $transformer);
 
+        /*
+        $resource->setMetaValue('ok', [
+            'ok' => 'okay'
+        ]);
+        */
+
         $data = $this->getContainer()->get('fractal')->createData($resource)->toArray();
 
         return $this->json($response, $data, $status);
@@ -108,16 +114,16 @@ abstract class Http
     /**
      * Bind a model to a transformer and start building a response.
      *
-     * @param Psr\Http\Message\ResponseInterface $response
-     * @param API\Domain\Model                   $model
-     * @param API\Transformer\Transformer        $transformer
-     * @param int                                $status
+     * @param Psr\Http\Message\ResponseInterface      $response
+     * @param API\Domain\Model\Api\Domain\ValueObject $data
+     * @param API\Transformer\Transformer             $transformer
+     * @param int                                     $status
      *
      * @return Psr\Http\Message\ResponseInterface
      */
-    public function item(Response $response, Model $model, Transformer $transformer, int $status = self::STATUS_OK) : Response
+    public function item(Response $response, $data, Transformer $transformer, int $status = self::STATUS_OK) : Response
     {
-        $resource = new Fractal\Resource\Item($model, $transformer);
+        $resource = new Fractal\Resource\Item($data, $transformer);
 
         $data = $this->getContainer()->get('fractal')->createData($resource)->toArray();
 
