@@ -2,14 +2,18 @@
 
 namespace API\Domain;
 
-use Exception;
+use API\Domain\Feature\CollectionBuilder;
 use API\Domain\Message\Event;
 use API\Domain\ValueObject\ID;
-use API\Feature\MagicMessageHandler;
+use API\Feature\Polymorphism;
+use API\Message\CanHandleMessages;
+use API\Message\Message;
+use Exception;
 
-abstract class Model
+abstract class Model implements CanHandleMessages, CanBuildCollection
 {
-    use MagicMessageHandler;
+    use Polymorphism;
+    use CollectionBuilder;
 
     protected $id;
     protected $events = [];
@@ -27,59 +31,45 @@ abstract class Model
 
         $this->events[] = $event;
 
-        return $this->applyEvent($event);
+        return $this->handle($event);
     }
 
     /**
-     * Get committed events.
+     * Get all raised events.
      *
      * @return API\Domain\Message\Event[]
      */
-    public function getCommittedEvents() : array
+    public function getEventStream() : array
     {
-        return array_filter($this->events, function ($event) {
-            return $event->isCommitted();
-        });
+        return $this->events;
     }
 
     /**
-     * Get uncommitted events.
+     * Get all raised events and release them.
      *
      * @return API\Domain\Message\Event[]
      */
-    public function getUncommittedEvents() : array
+    public function pullEvents() : array
     {
-        return array_filter($this->events, function ($event) {
-            return !$event->isCommitted();
-        });
+        $events = $this->getEventStream();
+
+        $this->events = [];
+
+        return $events;
     }
 
     /**
-     * Apply event.
+     * Handle the domain event.
      *
-     * @param API\Domain\Message\Event $event
-     *
-     * @return API\Domain\Model
+     * @param API\Message\Message $message
      */
-    public function applyEvent(Event $event) : self
+    public function handle(Message $message)
     {
-        $this->handleMagically($event, 'apply');
-
-        return $this;
-    }
-
-    /**
-     * Replay all committed events.
-     *
-     * @return API\Domain\Model
-     */
-    public function replayEvents() : self
-    {
-        $events = $this->getCommittedEvents();
-
-        foreach ($events as $event) {
-            $this->applyEvent($event);
+        if (!($message instanceof Event)) {
+            throw new Exception('Model can handle domain event message only');
         }
+
+        $this->polymorph('handle', $message);
 
         return $this;
     }
@@ -108,27 +98,11 @@ abstract class Model
     public function setId(ID $id) : Model
     {
         if (!empty($this->id)) {
-            throw new Exception('Unable to change ID', 1);
+            throw new Exception('Unable to change ID');
         }
 
         $this->id = $id;
 
         return $this;
-    }
-
-    /**
-     * Build a collection which can contains the model.
-     *
-     * @param array $models
-     *
-     * @return API\Domain\Collection
-     */
-    public static function collection(array $models = []) : Collection
-    {
-        $current_class = get_called_class();
-
-        return new Collection(array_filter($models, function ($model) use ($current_class) {
-            return $model instanceof $current_class;
-        }));
     }
 }
