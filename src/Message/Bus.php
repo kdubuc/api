@@ -3,6 +3,7 @@
 namespace API\Message;
 
 use API\Feature\ContainerAccess;
+use Exception;
 use Interop\Container\ContainerInterface as Container;
 use League\Tactician\CommandBus as TacticianBus;
 use League\Tactician\Exception\MissingHandlerException;
@@ -20,7 +21,7 @@ class Bus extends TacticianBus
      * Build the bus.
      *
      * @param Interop\Container\ContainerInterface $container
-     * @param Middleware[] $middlewares
+     * @param Middleware[]                         $middlewares
      */
     public function __construct(Container $container, array $middlewares = [])
     {
@@ -47,7 +48,13 @@ class Bus extends TacticianBus
             ]));
         }
 
-        $this->dispatched_messages[] = $message;
+        // We don't dispatch a message that was already dispatched before
+        if (array_key_exists($message->getId(), $this->dispatched_messages)) {
+            throw new Exception($message->getShortName().' (id: '.$message->getId().') already dispatched');
+        }
+
+        // Register the dispatched message
+        $this->dispatched_messages[$message->getId()] = $message;
 
         try {
             return $this->handle($message);
@@ -79,17 +86,23 @@ class Bus extends TacticianBus
     /**
      * Subscribes the handler to this bus.
      *
-     * @param string $handler
+     * @param string|API\Message\CanHandleMessages $handler
      */
-    public function subscribe(string $handler)
+    public function subscribe($handler)
     {
-        foreach (get_class_methods($handler) as $method) {
+        if (!in_array(CanHandleMessages::class, class_implements($handler))) {
+            throw new Exception('Handler MUST implements CanHandleMessages interface');
+        }
+
+        $handler_instance = is_string($handler) ? new $handler($this->getContainer()) : $handler;
+
+        foreach (get_class_methods($handler_instance) as $method) {
             if (strpos($method, 'handle') === 0) {
-                $handle_parameter_reflection = new ReflectionParameter([$handler, $method], 0);
+                $handle_parameter_reflection = new ReflectionParameter([get_class($handler_instance), $method], 0);
 
                 $expected_message = $handle_parameter_reflection->getClass()->name;
 
-                $this->locator->addHandler(new $handler($this->getContainer()), $expected_message);
+                $this->locator->addHandler($handler_instance, $expected_message);
             }
         }
     }

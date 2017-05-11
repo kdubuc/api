@@ -3,16 +3,21 @@
 namespace API\Message\Event;
 
 use API\Message\Handler;
+use API\Message\Message;
 
 abstract class Listener extends Handler
 {
     /**
      * Handle the event.
      *
-     * @param API\Message\Event\Event
+     * @param API\Message\Message\Message $message
      */
-    public function handle(Event $event)
+    public function handle(Message $message)
     {
-        $this->handleMagically($event);
+        if (!($message instanceof Event)) {
+            throw new Exception('Event handler can handle event message only');
+        }
+
+        parent::handle($message);
     }
 }
