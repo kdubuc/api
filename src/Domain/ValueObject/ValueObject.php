@@ -26,9 +26,18 @@ abstract class ValueObject implements JsonSerializable, CanBuildCollection
 
         array_walk_recursive($iterator, function(&$item) {
 
-            if($item instanceof ValueObject || $item instanceof Collection) {
+            if($item instanceof ValueObject) {
 
                 $item = $item->toArray();
+
+            }
+            elseif($item instanceof Collection) {
+
+                $item = array_map(function($element) {
+
+                    return $element instanceof ValueObject ? $element->toArray() : $element;
+
+                }, $item->toArray());
 
             }
 
