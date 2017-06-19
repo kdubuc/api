@@ -4,6 +4,7 @@ namespace API\Domain\ValueObject;
 
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidFactory;
+use API\Domain\Normalizable;
 
 class ID extends ValueObject
 {
@@ -11,8 +12,6 @@ class ID extends ValueObject
 
     /**
      * Generate new ID.
-     *
-     * @param Ramsey\Uuid\Uuid $uuid
      */
     public function __construct(Uuid $uuid)
     {
@@ -21,8 +20,6 @@ class ID extends ValueObject
 
     /**
      * Return the UUID.
-     *
-     * @return string
      */
     public function toString() : string
     {
@@ -30,37 +27,30 @@ class ID extends ValueObject
     }
 
     /**
-     * Convert the value object into an array.
-     *
-     * @return array
+     * Normalize the value object into an array.
      */
-    public function toArray() : array
+    public function normalize() : array
     {
-        return array_merge(parent::toArray(), [
-            'uuid' => $this->toString()
-        ]);
+        return [
+            'uuid'       => $this->toString(),
+            'class_name' => get_class($this),
+        ];
     }
 
     /**
      * Build the value object from array.
-     *
-     * @return array $input
-     *
-     * @return API\Domain\ValueObject\ValueObject
      */
-    public static function fromArray(array $input) : ValueObject
+    public static function denormalize(array $data) : Normalizable
     {
         $factory = new UuidFactory();
 
-        $uuid = $factory->fromString($input['uuid']);
+        $uuid = $factory->fromString($data['uuid']);
 
         return new self($uuid);
     }
 
     /**
      * Generate new ID.
-     *
-     * @return API\Domain\ValueObject\ID
      */
     public static function generate() : self
     {

@@ -2,9 +2,8 @@
 
 namespace API\Domain\ValueObject;
 
-use ReflectionClass;
 use Datetime as DatetimeBase;
-use DateTimeZone;
+use API\Domain\Normalizable;
 
 class Datetime extends ValueObject
 {
@@ -12,8 +11,6 @@ class Datetime extends ValueObject
 
     /**
      * Build new Datetime.
-     *
-     * @param Datetime $datetime
      */
     public function __construct(DatetimeBase $datetime = null)
     {
@@ -21,41 +18,31 @@ class Datetime extends ValueObject
     }
 
     /**
-     * Convert the value object into an array.
-     *
-     * @return array
+     * Proxy undefined calls to Datetime object.
      */
-    public function toArray() : array
+    public function __call($method, $parameters)
     {
-        return array_merge(parent::toArray(), (array) $this->datetime);
+        return call_user_func_array([$this->datetime, $method], $parameters);
+    }
+
+    /**
+     * Normalize the value object into an array.
+     */
+    public function normalize() : array
+    {
+        return [
+            'iso8601'    => $this->datetime->format('c'),
+            'class_name' => get_class($this),
+        ];
     }
 
     /**
      * Build the value object from array.
-     *
-     * @return array $input
-     *
-     * @return API\Domain\ValueObject\ValueObject
      */
-    public static function fromArray(array $input) : ValueObject
+    public static function denormalize(array $data) : Normalizable
     {
-        $timezone = new DateTimeZone($input['timezone']);
-
-        $datetime = new DatetimeBase($input['date'], $timezone);
+        $datetime = DatetimeBase::createFromFormat('Y-m-d\TH:i:sP', $data['iso8601']);
 
         return new self($datetime);
-    }
-
-    /**
-     * Proxy undefined calls to Datetime object
-     *
-     * @return string $method
-     * @return array $parameters
-     *
-     * @return mixed
-     */
-    public function __call($method, $parameters)
-    {
-        return call_user_func_array(array($this->datetime, $method), $parameters);
     }
 }

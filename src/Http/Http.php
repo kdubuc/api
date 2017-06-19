@@ -2,142 +2,120 @@
 
 namespace API\Http;
 
-use API\Domain\Collection;
-use API\Domain\Model;
-use API\Feature\ContainerAccess;
-use API\Transformer\Transformer;
 use League\Fractal;
-use Psr\Http\Message\ResponseInterface as Response;
 use RuntimeException;
+use API\Domain\Collection;
+use API\Feature\KernelAccess;
+use API\Repository\Repository;
+use API\Transformer\Transformer;
+use API\Domain\ValueObject\ValueObject;
+use Doctrine\Common\Collections\Criteria;
+use Psr\Http\Message\ResponseInterface as Response;
 
 abstract class Http
 {
-    use ContainerAccess;
+    use KernelAccess;
 
     // HTTP Statuses : 1×× Informational
-    const STATUS_CONTINUE            = 100;
-    const STATUS_SWITCHING_PROTOCOLS = 101;
-    const STATUS_PROCESSING          = 102;
+    public const STATUS_CONTINUE            = 100;
+    public const STATUS_SWITCHING_PROTOCOLS = 101;
+    public const STATUS_PROCESSING          = 102;
 
     // HTTP Statuses : 2×× Success
-    const STATUS_OK                            = 200;
-    const STATUS_CREATED                       = 201;
-    const STATUS_ACCEPTED                      = 202;
-    const STATUS_NON_AUTHORITATIVE_INFORMATION = 203;
-    const STATUS_NO_CONTENT                    = 204;
-    const STATUS_RESET_CONTENT                 = 205;
-    const STATUS_PARTIAL_CONTENT               = 206;
-    const STATUS_MULTI_STATUS                  = 207;
-    const STATUS_ALREADY_REPORTED              = 208;
-    const STATUS_IM_USED                       = 226;
+    public const STATUS_OK                            = 200;
+    public const STATUS_CREATED                       = 201;
+    public const STATUS_ACCEPTED                      = 202;
+    public const STATUS_NON_AUTHORITATIVE_INFORMATION = 203;
+    public const STATUS_NO_CONTENT                    = 204;
+    public const STATUS_RESET_CONTENT                 = 205;
+    public const STATUS_PARTIAL_CONTENT               = 206;
+    public const STATUS_MULTI_STATUS                  = 207;
+    public const STATUS_ALREADY_REPORTED              = 208;
+    public const STATUS_IM_USED                       = 226;
 
     // HTTP Statuses : 3×× Redirection
-    const STATUS_MULTIPLE_CHOICES   = 300;
-    const STATUS_MOVED_PERMANENTLY  = 301;
-    const STATUS_FOUND              = 302;
-    const STATUS_SEE_OTHER          = 303;
-    const STATUS_NOT_MODIFIED       = 304;
-    const STATUS_USE_PROXY          = 305;
-    const STATUS_TEMPORARY_REDIRECT = 307;
-    const STATUS_PERMANENT_REDIRECT = 308;
+    public const STATUS_MULTIPLE_CHOICES   = 300;
+    public const STATUS_MOVED_PERMANENTLY  = 301;
+    public const STATUS_FOUND              = 302;
+    public const STATUS_SEE_OTHER          = 303;
+    public const STATUS_NOT_MODIFIED       = 304;
+    public const STATUS_USE_PROXY          = 305;
+    public const STATUS_TEMPORARY_REDIRECT = 307;
+    public const STATUS_PERMANENT_REDIRECT = 308;
 
     // HTTP Statuses : 4×× Client Error
-    const STATUS_BAD_REQUEST                     = 400;
-    const STATUS_UNAUTHORIZED                    = 401;
-    const STATUS_PAYMENT_REQUIRED                = 402;
-    const STATUS_FORBIDDEN                       = 403;
-    const STATUS_NOT_FOUND                       = 404;
-    const STATUS_METHOD_NOT_ALLOWED              = 405;
-    const STATUS_NOT_ACCEPTABLE                  = 406;
-    const STATUS_PROXY_AUTHENTICATION_REQUIRED   = 407;
-    const STATUS_REQUEST_TIMEOUT                 = 408;
-    const STATUS_CONFLICT                        = 409;
-    const STATUS_GONE                            = 410;
-    const STATUS_LENGTH_REQUIRED                 = 411;
-    const STATUS_PRECONDITION_FAILED             = 412;
-    const STATUS_PAYLOAD_TOO_LARGE               = 413;
-    const STATUS_REQUEST_URI_TOO_LONG            = 414;
-    const STATUS_UNSUPPORTED_MEDIA_TYPE          = 415;
-    const STATUS_REQUESTED_RANGE_NOT_SATISFIABLE = 416;
-    const STATUS_EXPECTATION_FAILED              = 417;
-    const STATUS_IM_A_TEAPOT                     = 418;
-    const STATUS_MISDIRECTED_REQUEST             = 421;
-    const STATUS_UNPROCESSABLE_ENTITY            = 422;
-    const STATUS_LOCKED                          = 423;
-    const STATUS_FAILED_DEPENDENCY               = 424;
-    const STATUS_UPGRADE_REQUIRED                = 426;
-    const STATUS_PRECONDITION_REQUIRED           = 428;
-    const STATUS_TOO_MANY_REQUESTS               = 429;
-    const STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE = 431;
-    const STATUS_UNAVAILABLE_FOR_LEGAL_REASONS   = 451;
-    const STATUS_CLIENT_CLOSED_REQUEST           = 499;
+    public const STATUS_BAD_REQUEST                     = 400;
+    public const STATUS_UNAUTHORIZED                    = 401;
+    public const STATUS_PAYMENT_REQUIRED                = 402;
+    public const STATUS_FORBIDDEN                       = 403;
+    public const STATUS_NOT_FOUND                       = 404;
+    public const STATUS_METHOD_NOT_ALLOWED              = 405;
+    public const STATUS_NOT_ACCEPTABLE                  = 406;
+    public const STATUS_PROXY_AUTHENTICATION_REQUIRED   = 407;
+    public const STATUS_REQUEST_TIMEOUT                 = 408;
+    public const STATUS_CONFLICT                        = 409;
+    public const STATUS_GONE                            = 410;
+    public const STATUS_LENGTH_REQUIRED                 = 411;
+    public const STATUS_PRECONDITION_FAILED             = 412;
+    public const STATUS_PAYLOAD_TOO_LARGE               = 413;
+    public const STATUS_REQUEST_URI_TOO_LONG            = 414;
+    public const STATUS_UNSUPPORTED_MEDIA_TYPE          = 415;
+    public const STATUS_REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+    public const STATUS_EXPECTATION_FAILED              = 417;
+    public const STATUS_IM_A_TEAPOT                     = 418;
+    public const STATUS_MISDIRECTED_REQUEST             = 421;
+    public const STATUS_UNPROCESSABLE_ENTITY            = 422;
+    public const STATUS_LOCKED                          = 423;
+    public const STATUS_FAILED_DEPENDENCY               = 424;
+    public const STATUS_UPGRADE_REQUIRED                = 426;
+    public const STATUS_PRECONDITION_REQUIRED           = 428;
+    public const STATUS_TOO_MANY_REQUESTS               = 429;
+    public const STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE = 431;
+    public const STATUS_UNAVAILABLE_FOR_LEGAL_REASONS   = 451;
+    public const STATUS_CLIENT_CLOSED_REQUEST           = 499;
 
     // HTTP Statuses : 5×× Server Error
-    const STATUS_INTERNAL_SERVER_ERROR           = 500;
-    const STATUS_NOT_IMPLEMENTED                 = 501;
-    const STATUS_BAD_GATEWAY                     = 502;
-    const STATUS_SERVICE_UNAVAILABLE             = 503;
-    const STATUS_GATEWAY_TIMEOUT                 = 504;
-    const STATUS_HTTP_VERSION_NOT_SUPPORTED      = 505;
-    const STATUS_VARIANT_ALSO_NEGOTIATES         = 506;
-    const STATUS_INSUFFICIENT_STORAGE            = 507;
-    const STATUS_LOOP_DETECTED                   = 508;
-    const STATUS_NOT_EXTENDED                    = 510;
-    const STATUS_NETWORK_AUTHENTICATION_REQUIRED = 511;
-    const STATUS_NETWORK_CONNECT_TIMEOUT_ERROR   = 599;
+    public const STATUS_INTERNAL_SERVER_ERROR           = 500;
+    public const STATUS_NOT_IMPLEMENTED                 = 501;
+    public const STATUS_BAD_GATEWAY                     = 502;
+    public const STATUS_SERVICE_UNAVAILABLE             = 503;
+    public const STATUS_GATEWAY_TIMEOUT                 = 504;
+    public const STATUS_HTTP_VERSION_NOT_SUPPORTED      = 505;
+    public const STATUS_VARIANT_ALSO_NEGOTIATES         = 506;
+    public const STATUS_INSUFFICIENT_STORAGE            = 507;
+    public const STATUS_LOOP_DETECTED                   = 508;
+    public const STATUS_NOT_EXTENDED                    = 510;
+    public const STATUS_NETWORK_AUTHENTICATION_REQUIRED = 511;
+    public const STATUS_NETWORK_CONNECT_TIMEOUT_ERROR   = 599;
 
     /**
      * Bind a collection to a transformer and start building a response.
-     *
-     * @param Psr\Http\Message\ResponseInterface $response
-     * @param API\Domain\Collection              $collection
-     * @param API\Transformer\Transformer        $transformer
-     * @param int                                $status
-     *
-     * @return Psr\Http\Message\ResponseInterface
      */
     public function collection(Response $response, Collection $collection, Transformer $transformer, int $status = self::STATUS_OK) : Response
     {
-        $resource = new Fractal\Resource\Collection($collection->toArray(), $transformer);
+        $resource = new Fractal\Resource\Collection($collection, $transformer);
 
-        /*
-        $resource->setMetaValue('ok', [
-            'ok' => 'okay'
-        ]);
-        */
+        $resource->setMeta($collection->getMeta());
 
-        $data = $this->getContainer()->get('fractal')->createData($resource)->toArray();
+        $data = $this->getKernel()->get('fractal.json')->createData($resource)->toArray();
 
         return $this->json($response, $data, $status);
     }
 
     /**
      * Bind a model to a transformer and start building a response.
-     *
-     * @param Psr\Http\Message\ResponseInterface      $response
-     * @param API\Domain\Model\Api\Domain\ValueObject $data
-     * @param API\Transformer\Transformer             $transformer
-     * @param int                                     $status
-     *
-     * @return Psr\Http\Message\ResponseInterface
      */
-    public function item(Response $response, $data, Transformer $transformer, int $status = self::STATUS_OK) : Response
+    public function item(Response $response, ValueObject $data, Transformer $transformer, int $status = self::STATUS_OK) : Response
     {
         $resource = new Fractal\Resource\Item($data, $transformer);
 
-        $data = $this->getContainer()->get('fractal')->createData($resource)->toArray();
+        $data = $this->getKernel()->get('fractal.json')->createData($resource)->toArray();
 
         return $this->json($response, $data, $status);
     }
 
     /**
      * Json.
-     *
-     * @param Psr\Http\Message\ResponseInterface $response
-     * @param array                              $data
-     * @param int                                $status
-     *
-     * @return Psr\Http\Message\ResponseInterface
      */
     public function json(Response $response, array $data, int $status = self::STATUS_OK) : Response
     {
@@ -152,5 +130,21 @@ abstract class Http
         $response_with_json = $response->withHeader('Content-Type', 'application/json;charset=utf-8');
 
         return $response_with_json->withStatus($status);
+    }
+
+    /**
+     * Paginate.
+     */
+    public function pagination(Response $response, Repository $repository, Transformer $transformer, $page = 1, int $rows_per_page = 10, Criteria $criteria = null, string $collection_class_name = "API\\Domain\\Collection") : Response
+    {
+        if (empty($criteria)) {
+            $criteria = Criteria::create();
+        }
+
+        $criteria->setMaxResults($rows_per_page)->setFirstResult($rows_per_page * ($page - 1));
+
+        $collection = $repository->matching($criteria)->morph($collection_class_name);
+
+        return $this->collection($response, $collection, $transformer);
     }
 }

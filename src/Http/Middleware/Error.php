@@ -3,18 +3,14 @@
 namespace API\Http\Middleware;
 
 use Exception;
+use ReflectionClass;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use ReflectionClass;
 
 class Error extends Middleware
 {
     /**
      * Middleware handler.
-     *
-     * @param Psr\Http\Message\ServerRequestInterface $request
-     * @param Psr\Http\Message\ResponseInterface      $response
-     * @param callable                                $next
      */
     public function __invoke(Request $request, Response $response, callable $next) : Response
     {
@@ -29,7 +25,7 @@ class Error extends Middleware
                 'code'    => 50000,
             ];
 
-            if ($this->getContainer('settings')->get('debug')) {
+            if ($this->getKernel('settings')->get('debug')) {
                 $error['line']  = $e->getLine();
                 $error['trace'] = $e->getTraceAsString();
                 $error['file']  = $e->getFile();

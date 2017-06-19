@@ -8,9 +8,6 @@ trait Polymorphism
 {
     /**
      * Polymorph the method name thanks to object class name.
-     *
-     * @param string $method_name_prefix
-     * @param object $args
      */
     public function polymorph(string $method_name_prefix, $arg)
     {

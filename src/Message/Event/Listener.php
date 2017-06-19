@@ -2,22 +2,21 @@
 
 namespace API\Message\Event;
 
-use API\Message\Handler;
-use API\Message\Message;
+use API\Feature\KernelAccess;
+use API\Feature\Polymorphism;
+use League\Event\AbstractListener;
+use League\Event\EventInterface as Event;
 
-abstract class Listener extends Handler
+abstract class Listener extends AbstractListener
 {
+    use KernelAccess;
+    use Polymorphism;
+
     /**
      * Handle the event.
-     *
-     * @param API\Message\Message\Message $message
      */
-    public function handle(Message $message)
+    public function handle(Event $event) : void
     {
-        if (!($message instanceof Event)) {
-            throw new Exception('Event handler can handle event message only');
-        }
-
-        parent::handle($message);
+        $this->polymorph('handle', $event);
     }
 }

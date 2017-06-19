@@ -4,56 +4,13 @@ namespace API\Domain\ValueObject;
 
 use Exception;
 use JsonSerializable;
-use ArrayIterator;
-use API\Domain\Feature\CollectionBuilder;
-use API\Domain\CanBuildCollection;
 use API\Domain\Collection;
+use API\Domain\Normalizable;
 
-abstract class ValueObject implements JsonSerializable, CanBuildCollection
+abstract class ValueObject implements JsonSerializable, Normalizable
 {
-    use CollectionBuilder;
-
     /**
-     * Convert the value object into an array.
-     *
-     * @return array
-     */
-    public function toArray() : array
-    {
-        $iterator = new ArrayIterator(get_object_vars($this), ARRAY_FILTER_USE_KEY);
-
-        $iterator = (array) $iterator;
-
-        array_walk_recursive($iterator, function(&$item) {
-
-            if($item instanceof ValueObject) {
-
-                $item = $item->toArray();
-
-            }
-            elseif($item instanceof Collection) {
-
-                $item = array_map(function($element) {
-
-                    return $element instanceof ValueObject ? $element->toArray() : $element;
-
-                }, $item->toArray());
-
-            }
-
-        });
-
-        $iterator['value_object_class_name'] = get_called_class();
-
-        return $iterator;
-    }
-
-    /**
-     * Merge with another ValueObject. Return new ValueObject (immutable)
-     *
-     * @param API\Domain\ValueObject
-     *
-     * @return API\Domain\ValueObject
+     * Merge with another ValueObject. Return new ValueObject (immutable).
      */
     public function merge(ValueObject ...$value_objects) : ValueObject
     {
@@ -80,35 +37,39 @@ abstract class ValueObject implements JsonSerializable, CanBuildCollection
 
         $new_value_object = array_shift($value_objects);
 
-        foreach($value_objects as $value_object) {
-
-            if(!is_a($value_object, get_class($new_value_object))) {
-                throw new Exception("Error Processing Request", 1);
+        foreach ($value_objects as $value_object) {
+            if (!is_a($value_object, get_class($new_value_object))) {
+                throw new Exception('Error Processing Request', 1);
             }
 
-            $new_value_object = self::fromArray((array) json_decode($patcher(
-                json_encode($new_value_object->toArray(), true),
-                json_encode($value_object->toArray(), true)
+            $new_value_object = self::denormalize((array) json_decode($patcher(
+                json_encode($new_value_object->normalize(), true),
+                json_encode($value_object->normalize(), true)
             )));
-
         }
 
         return $new_value_object;
     }
 
     /**
-     * Build the value object from array.
-     *
-     * @return array $input
-     *
-     * @return API\Domain\ValueObject\ValueObject
+     * Update properties and return new ValueObject (immutable).
      */
-    abstract public static function fromArray(array $input) : ValueObject;
+    public function update(array $properties) : ValueObject
+    {
+        $value_object_normalized = $this->normalize();
+
+        // Browse the firt dimension of the normalized VO form.
+        foreach ($value_object_normalized as $field => $value) {
+            if (array_key_exists($field, $properties)) {
+                $value_object_normalized[$field] = $properties[$field];
+            }
+        }
+
+        return static::denormalize($value_object_normalized);
+    }
 
     /**
      * Check if the value object is empty.
-     *
-     * @return bool
      */
     public function isEmpty() : bool
     {
@@ -118,22 +79,30 @@ abstract class ValueObject implements JsonSerializable, CanBuildCollection
     }
 
     /**
-     * Check if the value object is equal to another.
-     *
-     * @return bool
+     * Check if the value object / entity / Aggregate root is equal to another.
      */
     public function isEqual(ValueObject $value_object) : bool
     {
-        return $this->toArray() === $value_object->toArray();
+        return $this->normalize() === $value_object->normalize();
     }
 
     /**
-     * Implements JsonSerializable.
-     *
-     * @return array
+     * Build a collection which can contains the model.
      */
-    public function jsonSerialize() : array
+    public static function collection(array $domain_entities = []) : Collection
     {
-        return $this->toArray();
+        $current_class = get_called_class();
+
+        return new Collection(array_filter($domain_entities, function ($entity) use ($current_class) {
+            return $entity instanceof $current_class;
+        }));
+    }
+
+    /**
+     * Return JSON representation.
+     */
+    public function jsonSerialize() : string
+    {
+        return json_encode($this->normalize());
     }
 }

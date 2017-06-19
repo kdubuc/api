@@ -2,15 +2,13 @@
 
 namespace API;
 
-use Psr\Http\Message\ResponseInterface as Response;
 use Slim\App as Slim;
+use Psr\Http\Message\ResponseInterface as Response;
 
 abstract class Foundation extends Slim
 {
     /**
      * Foundation.
-     *
-     * @param API\Kernel $kernel
      */
     public function __construct(Kernel $kernel)
     {
@@ -23,13 +21,17 @@ abstract class Foundation extends Slim
 
     /**
      * Power on !
-     *
-     * @param API\Kernel $kernel
-     *
-     * @return Psr\Http\Message\ResponseInterface
      */
     public static function power(Kernel $kernel) : Response
     {
         return (new static($kernel))->run();
+    }
+
+    /**
+     * Enable access to the kernel.
+     */
+    public function getKernel() : Kernel
+    {
+        return $this->getContainer();
     }
 }

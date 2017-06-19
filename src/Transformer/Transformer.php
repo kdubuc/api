@@ -2,45 +2,40 @@
 
 namespace API\Transformer;
 
-use API\Feature\ContainerAccess;
+use API\Domain\Collection;
+use API\Feature\KernelAccess;
 use League\Fractal\TransformerAbstract as FractalTransformer;
 
 abstract class Transformer extends FractalTransformer
 {
-    use ContainerAccess;
+    use KernelAccess;
 
     /**
      * Create a new item resource object.
-     *
-     * @param mixed                        $data
-     * @param TransformerAbstract|callable $transformer
-     * @param string                       $resourceKey
-     *
-     * @return array
      */
     protected function item($data, $transformer, $resourceKey = null) : array
     {
-        $manager = $this->getContainer()->get('fractal');
+        $manager = $this->getCurrentScope()->getManager();
 
-        $scope = $manager->createData(parent::item($data, $transformer, $resourceKey));
+        $resource = parent::item($data, $transformer, $resourceKey);
+
+        $scope = $manager->createData($resource);
 
         return $scope->toArray();
     }
 
     /**
      * Create a new collection resource object.
-     *
-     * @param mixed                        $data
-     * @param TransformerAbstract|callable $transformer
-     * @param string                       $resourceKey
-     *
-     * @return array
      */
     protected function collection($data, $transformer, $resourceKey = null) : array
     {
-        $manager = $this->getContainer()->get('fractal');
+        $manager = $this->getCurrentScope()->getManager();
 
-        $scope = $manager->createData(parent::collection($data, $transformer, $resourceKey));
+        $resource = parent::collection($data, $transformer, $resourceKey);
+
+        $resource->setMeta($data->getMeta());
+
+        $scope = $manager->createData($resource);
 
         return $scope->toArray();
     }

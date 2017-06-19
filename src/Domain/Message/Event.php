@@ -2,20 +2,28 @@
 
 namespace API\Domain\Message;
 
-use ReflectionClass;
-use Datetime;
 use Exception;
+use API\Message\Message;
 use API\Domain\ValueObject\ID;
 use API\Message\Event\Event as BaseEvent;
 
 abstract class Event extends BaseEvent
 {
     /**
+     * Record new message.
+     */
+    public static function recordFromArray(array $data) : Message
+    {
+        $event = parent::recordFromArray($data);
+
+        $event->setEmitterId(ID::denormalize(['uuid' => $data['emitter_id']]));
+        $event->setEmitterClassName($data['emitter_class_name']);
+
+        return $event;
+    }
+
+    /**
      * Set the Emitter Id.
-     *
-     * @param API\Domain\ValueObject\ID $emitter_id
-     *
-     * @return $this
      */
     public function setEmitterId(ID $emitter_id) : Event
     {
@@ -30,8 +38,6 @@ abstract class Event extends BaseEvent
 
     /**
      * Get the emitter id.
-     *
-     * @return API\Domain\ValueObject\ID
      */
     public function getEmitterId() : ID
     {
@@ -39,32 +45,35 @@ abstract class Event extends BaseEvent
     }
 
     /**
-     * Rebuild event from the record date, and payload.
-     *
-     * @param API\Domain\Message\Event
-     *
-     * @return API\Domain\Message\Event
+     * Set the emitter class name.
      */
-    public static function rebuild(string $event_id, ID $emitter_id, Datetime $record_date, array $payload = []) : Event
+    public function setEmitterClassName(string $emitter_class_name) : Event
     {
-        $current_class = get_called_class();
+        if (!empty($this->emitter_class_name)) {
+            throw new Exception('Change emitter class name is not allowed');
+        }
 
-        $reflection = new ReflectionClass($current_class);
+        $this->emitter_class_name = $emitter_class_name;
 
-        $event = $reflection->newInstanceWithoutConstructor();
+        return $this;
+    }
 
-        $event_id = $reflection->getProperty('id');
-        $event_id->setAccessible(true);
-        $event_id->setValue($event, $event_id);
+    /**
+     * Get the emitter class name.
+     */
+    public function getEmitterClassName() : string
+    {
+        return $this->emitter_class_name;
+    }
 
-        $event_record_date = $reflection->getProperty('record_date');
-        $event_record_date->setAccessible(true);
-        $event_record_date->setValue($event, $record_date);
-
-        $event->setEmitterId($emitter_id);
-
-        $event->fillPayload($payload);
-
-        return $event;
+    /**
+     * Return array representation.
+     */
+    public function toArray() : array
+    {
+        return array_merge(parent::toArray(), [
+            'emitter_id'         => $this->getEmitterId()->normalize()['uuid'],
+            'emitter_class_name' => $this->getEmitterClassName(),
+        ]);
     }
 }

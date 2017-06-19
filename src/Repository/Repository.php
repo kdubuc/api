@@ -3,17 +3,15 @@
 namespace API\Repository;
 
 use API\Domain\Collection;
-use API\Domain\Model;
+use API\Domain\AggregateRoot;
 use API\Domain\ValueObject\ID;
 use API\Repository\Storage\Storage;
+use Doctrine\Common\Collections\Criteria;
 
 class Repository
 {
     /**
      * Build the repository with a storage strategy.
-     *
-     * @param string                         $class_name
-     * @param API\Repository\Storage\Storage $storage
      */
     public function __construct(string $class_name, Storage $storage)
     {
@@ -22,12 +20,16 @@ class Repository
     }
 
     /**
+     * Selects all elements and returns them as a collection.
+     */
+    public function all() : Collection
+    {
+        return $this->matching(Criteria::create());
+    }
+
+    /**
      * Selects all elements from a selectable that match the expression and
      * returns a new collection containing these elements.
-     *
-     * @param API\Repository\Criteria $criteria
-     *
-     * @return API\Collection\Collection
      */
     public function matching(Criteria $criteria) : Collection
     {
@@ -36,14 +38,10 @@ class Repository
 
     /**
      * Returns the value at specified offset.
-     *
-     * @param API\Domain\ValueObject\ID $id The offset to retrieve
-     *
-     * @return API\Domain\Model
      */
-    public function get(ID $id) : Model
+    public function get(ID $id) : AggregateRoot
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->in('id', [$id]));
+        $criteria = Criteria::create()->where(Criteria::expr()->eq('id.uuid', $id->toString()));
 
         $collection = $this->storage->select($this->class_name, $criteria);
 
@@ -56,12 +54,8 @@ class Repository
 
     /**
      * Add element.
-     *
-     * @param API\Domain\Model The model to add
-     *
-     * @return API\Domain\Model
      */
-    public function add(Model $model) : Model
+    public function add(AggregateRoot $model) : AggregateRoot
     {
         if ($this->contains($model)) {
             return $this->storage->update($model);
@@ -72,24 +66,18 @@ class Repository
 
     /**
      * Set element.
-     *
-     * @param API\Domain\Model The model to set
      */
-    public function set(Model $model) : Model
+    public function set(AggregateRoot $model) : AggregateRoot
     {
         return $this->add($model);
     }
 
     /**
      * Remove element.
-     *
-     * @param API\Domain\Model The model to remove
-     *
-     * @return API\Domain\Model
      */
-    public function remove(Model $model) : Model
+    public function remove(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->in('id', [$model->getId()]));
+        $criteria = Criteria::create()->where(Criteria::expr()->eq('id.uuid', $aggregate_root->getId()->toString()));
 
         $this->storage->delete($this->class_name, $criteria);
 
@@ -98,14 +86,10 @@ class Repository
 
     /**
      * Test if the element exists in the repository.
-     *
-     * @param bool
-     *
-     * @return bool
      */
-    public function contains(Model $model) : bool
+    public function contains(AggregateRoot $aggregate_root) : bool
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->in('id', [$model->getId()]));
+        $criteria = Criteria::create()->where(Criteria::expr()->eq('id.uuid', $aggregate_root->getId()->toString()));
 
         return empty($this->storage->select($this->class_name, $criteria));
     }

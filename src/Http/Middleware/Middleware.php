@@ -10,10 +10,6 @@ abstract class Middleware extends Http
 {
     /**
      * Middleware handler.
-     *
-     * @param Psr\Http\Message\ServerRequestInterface $request
-     * @param Psr\Http\Message\ResponseInterface      $response
-     * @param callable                                $next
      */
     abstract public function __invoke(Request $request, Response $response, callable $next) : Response;
 }

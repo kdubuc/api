@@ -3,8 +3,8 @@
 namespace API;
 
 use Exception;
-use Interop\Container\ContainerInterface as Container;
 use Slim\Container as Pimple;
+use Interop\Container\ContainerInterface as Container;
 
 class Kernel extends Pimple implements Container
 {
@@ -12,8 +12,6 @@ class Kernel extends Pimple implements Container
 
     /**
      * Create new kernel.
-     *
-     * @param array $values The parameters or objects
      */
     public function __construct(array $values = [])
     {
@@ -32,10 +30,6 @@ class Kernel extends Pimple implements Container
 
     /**
      * Fill the kernel with an array of values.
-     *
-     * @param array $values
-     *
-     * @return self
      */
     protected function fillWithValues(array $values) : self
     {
@@ -50,11 +44,6 @@ class Kernel extends Pimple implements Container
 
     /**
      * Provide service.
-     *
-     * @param API\ServiceProvider\Serviceprovider $provider
-     * @param array                               $values
-     *
-     * @return self
      */
     protected function provide(ServiceProvider\ServiceProvider $provider, array $values = []) : self
     {
@@ -69,8 +58,6 @@ class Kernel extends Pimple implements Container
 
     /**
      * Check Kernel Integrity with the definitions's declaration.
-     *
-     * @return self
      */
     public function checkIntegrity() : self
     {
@@ -87,10 +74,6 @@ class Kernel extends Pimple implements Container
 
     /**
      * Finds an entry of the container by its identifier and returns it.
-     *
-     * @param string $id Identifier of the entry to look for
-     *
-     * @return mixed Entry
      */
     public function get($id)
     {
@@ -117,8 +100,6 @@ class Kernel extends Pimple implements Container
 
     /**
      * Get Kernel definitions.
-     *
-     * @return array
      */
     public function getDefinitions() : array
     {

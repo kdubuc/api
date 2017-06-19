@@ -2,25 +2,21 @@
 
 namespace API\ServiceProvider;
 
-use Interop\Container\ContainerInterface as Container;
 use Slim\DefaultServicesProvider;
+use Interop\Container\ContainerInterface as Container;
 
 class Slim extends ServiceProvider
 {
     /**
      * Registers services on the given app.
-     *
-     * @param Interop\Container\ContainerInterface $container
      */
-    public function register(Container $container)
+    public function register(Container $container) : void
     {
         (new DefaultServicesProvider())->register($container);
     }
 
     /**
      * Get service definitions.
-     *
-     * @return array
      */
     public function getDefinitions() : array
     {

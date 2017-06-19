@@ -2,33 +2,67 @@
 
 namespace API\Message;
 
-use ArrayIterator;
 use Datetime;
+use ArrayIterator;
 use ReflectionClass;
+use JsonSerializable;
 use ReflectionMethod;
-use API\Domain\Collection;
-use API\Domain\ValueObject\ValueObject;
+use API\Domain\Normalizable;
 
-abstract class Message
+abstract class Message implements JsonSerializable
 {
-    protected $id, $record_date;
+    /**
+     * Record new message.
+     */
+    public static function recordFromArray(array $data) : Message
+    {
+        $id          = $data['id'];
+        $recorded_on = Datetime::createFromFormat('Y-m-d\TH:i:sP', $data['record_date']);
+        $payload     = $data['payload'];
+        $class_name  = $data['name'];
+
+        $attributes = $class_name::getAttributes();
+
+        $construct_parameters = [];
+
+        foreach ($attributes as $attribute => $type) {
+            if (array_key_exists($attribute, $payload)) {
+                $value = $payload[$attribute];
+                if (is_array($value) && array_key_exists('class_name', $value)) {
+                    $value = $value['class_name']::denormalize($value);
+                }
+                $construct_parameters[] = $value;
+            }
+        }
+
+        return $class_name::record($id, $recorded_on, $construct_parameters);
+    }
 
     /**
-     * Get the message name (e.g. the type).
-     *
-     * @return string
+     * Record new message.
      */
-    public function getName() : string
+    public static function record(string $id, DateTime $recorded_on, ...$construct_parameters) : Message
     {
-        return get_class($this);
+        $message = new static(...$construct_parameters[0]);
+
+        $message->id          = $id;
+        $message->record_date = $recorded_on;
+
+        return $message;
+    }
+
+    /**
+     * Record a new message with a new id and the date of the day.
+     */
+    public static function recordNow(...$construct_parameters) : Message
+    {
+        return static::record(uniqid(), new Datetime(), $construct_parameters);
     }
 
     /**
      * Get the short message name (e.g. the type condensed).
-     *
-     * @return string
      */
-    public function getShortName() : string
+    public function getName() : string
     {
         $reflection = new ReflectionClass($this);
 
@@ -37,8 +71,6 @@ abstract class Message
 
     /**
      * Get message id.
-     *
-     * @return string
      */
     public function getId() : string
     {
@@ -50,29 +82,23 @@ abstract class Message
     }
 
     /**
-     * Payload array will be filtered to inlcude only construct params
-     *
-     * @return array
+     * Payload array will be filtered to inlcude only construct params.
      */
     public function getPayload() : array
     {
-        $method = new ReflectionMethod($this, '__construct');
+        $attributes = self::getAttributes();
 
-        $parameters_name = array_map(function($parameter) {
-            return $parameter->getName();
-        }, $method->getParameters());
+        $payload = [];
 
-        $iterator = new ArrayIterator(array_filter(get_object_vars($this), function ($k) use ($parameters_name) {
-            return in_array($k, $parameters_name);
-        }, ARRAY_FILTER_USE_KEY));
+        foreach ($attributes as $name => $type) {
+            $payload[$name] = $this->get($name);
+        }
 
-        return (array) $iterator;
+        return $payload;
     }
 
     /**
      * Get the recorded date.
-     *
-     * @return Datetime
      */
     public function getRecordDate() : Datetime
     {
@@ -84,58 +110,36 @@ abstract class Message
     }
 
     /**
-     * Fill the message payload.
-     *
-     * @return string
+     * Get message attributes names / types. Attributes are __construct signature.
      */
-    public function fillPayload(array $args = []) : Message
+    public static function getAttributes() : array
     {
-        $current_class = get_called_class();
+        $method = new ReflectionMethod(get_called_class(), '__construct');
 
-        $method = new ReflectionMethod($this, '__construct');
+        $attributes = array_reduce($method->getParameters(), function ($result, $parameter) {
+            $result[$parameter->getName()] = $parameter->getType()->__toString();
 
-        $parameters_name = array_map(function($parameter) {
-            return $parameter->getName();
-        }, $method->getParameters());
+            return $result;
+        }, []);
 
-        $args = (array) new ArrayIterator(array_filter($args, function ($k) use ($parameters_name) {
-            return in_array($k, $parameters_name);
+        return $attributes;
+    }
+
+    /**
+     * Fill the message payload.
+     */
+    public function fillPayload(array $data = []) : Message
+    {
+        $attributes = self::getAttributes();
+
+        $data = (array) new ArrayIterator(array_filter($data, function ($k) use ($attributes) {
+            return in_array($k, array_keys($attributes));
         }, ARRAY_FILTER_USE_KEY));
 
-        foreach ($method->getParameters() as $parameter) {
-
-            $name = $parameter->getName();
-            $type = $parameter->getType()->__toString();
-
-            if(is_subclass_of($type, ValueObject::class) && is_array($args[$name])) {
-                $value = $type::fromArray($args[$name]);
-            }
-            else if($type == Collection::class) {
-                if($args[$name] instanceof Collection) {
-                    $value = $args[$name];
-                }
-                else if(!empty($args[$name])) {
-                    $elements = array_map(function($element) {
-                        if(is_array($element)) {
-                            $type_vo = "\\".$element['value_object_class_name'];
-                            return $type_vo::fromArray($element);
-                        }
-                        else {
-                            return $element;
-                        }
-                    }, $args[$name]);
-                    $value = new Collection($elements);
-                }
-                else {
-                    $value = new Collection();
-                }
-            }
-            else {
-                $value = $args[$name];
-            }
+        foreach ($attributes as $name => $type) {
+            $value = $data[$name];
 
             $this->set($name, $value);
-            // $this->set($name, $position >= count($args) ? $parameter->getDefaultValue() : $args[$position]);
         }
 
         return $this;
@@ -143,28 +147,42 @@ abstract class Message
 
     /**
      * Get a payload's property.
-     *
-     * @param string $name
-     *
-     * @return mixed
      */
     public function get(string $name)
     {
-        return $this->$name;
+        return $this->{"payload_$name"};
     }
 
     /**
      * Set a payload's property.
-     *
-     * @param string $name
-     * @param mixed  $value
-     *
-     * @return API\Message\Message
      */
     public function set(string $name, $value) : self
     {
-        $this->$name = $value;
+        $this->{"payload_$name"} = $value;
 
         return $this;
+    }
+
+    /**
+     * Return array representation.
+     */
+    public function toArray() : array
+    {
+        return [
+            'id'          => $this->getId(),
+            'name'        => get_called_class(),
+            'record_date' => $this->getRecordDate()->format('c'),
+            'payload'     => array_map(function ($value) {
+                return $value instanceof Normalizable ? $value->normalize() : $value;
+            }, $this->getPayload()),
+        ];
+    }
+
+    /**
+     * Return JSON representation.
+     */
+    public function jsonSerialize() : array
+    {
+        return $this->toArray();
     }
 }

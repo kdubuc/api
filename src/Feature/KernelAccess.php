@@ -4,12 +4,10 @@ namespace API\Feature;
 
 use Interop\Container\ContainerInterface as Container;
 
-trait ContainerAccess
+trait KernelAccess
 {
     /**
      * Provide container to the controller.
-     *
-     * @param Interop\Container\ContainerInterface $container
      */
     public function __construct(Container $container)
     {
@@ -18,10 +16,8 @@ trait ContainerAccess
 
     /**
      * Enable access to the DI.
-     *
-     * @return Interop\Container\ContainerInterface
      */
-    public function getContainer() : Container
+    public function getKernel() : Container
     {
         return $this->container;
     }
