@@ -118,6 +118,7 @@ class Collection extends ArrayCollection implements Normalizable
             foreach (array_reverse($orderings) as $field => $ordering) {
                 $next = Expression\Visitor::sortByField($field, $ordering == Criteria::DESC ? -1 : 1, $next);
             }
+            $filtered = $collection->getData();
             uasort($filtered, $next);
             $collection = $collection->createFrom($filtered);
         }
@@ -126,7 +127,7 @@ class Collection extends ArrayCollection implements Normalizable
         $offset = $criteria->getFirstResult();
         $length = $criteria->getMaxResults();
         if ($offset || $length) {
-            $filtered   = array_slice($filtered, (int) $offset, $length);
+            $filtered   = array_slice($collection->getData(), (int) $offset, $length);
             $collection = $collection->createFrom($filtered);
         }
 
