@@ -17,7 +17,7 @@ abstract class Message implements JsonSerializable
     public static function recordFromArray(array $data) : Message
     {
         $id          = $data['id'];
-        $recorded_on = Datetime::createFromFormat('Y-m-d\TH:i:sP', $data['record_date']);
+        $recorded_on = Datetime::createFromFormat('Y-m-d\TH:i:s.u', $data['record_date']);
         $payload     = $data['payload'];
         $class_name  = $data['name'];
 
@@ -171,7 +171,7 @@ abstract class Message implements JsonSerializable
         return [
             'id'          => $this->getId(),
             'name'        => get_called_class(),
-            'record_date' => $this->getRecordDate()->format('c'),
+            'record_date' => $this->getRecordDate()->format('Y-m-d\TH:i:s.u'),
             'payload'     => array_map(function ($value) {
                 return $value instanceof Normalizable ? $value->normalize() : $value;
             }, $this->getPayload()),
