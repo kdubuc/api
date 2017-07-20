@@ -6,6 +6,7 @@ use API\Domain\Collection;
 use API\Domain\AggregateRoot;
 use API\Domain\ValueObject\ID;
 use API\Repository\Storage\Storage;
+use API\Domain\Expression;
 use Doctrine\Common\Collections\Criteria;
 
 class Repository
@@ -41,9 +42,9 @@ class Repository
      */
     public function get(ID $id) : AggregateRoot
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('id.uuid', $id->toString()));
+        $criteria = Criteria::create()->where(Expression\Comparison::eq('id.uuid', $id->toString()));
 
-        $collection = $this->storage->select($this->class_name, $criteria);
+        $collection = $this->matching($criteria);
 
         if ($collection->isEmpty()) {
             throw new \Exception('Collection empty', 1);
@@ -55,21 +56,21 @@ class Repository
     /**
      * Add element.
      */
-    public function add(AggregateRoot $model) : AggregateRoot
+    public function add(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        if ($this->contains($model)) {
-            return $this->storage->update($model);
-        } else {
-            return $this->storage->insert($model);
-        }
+        $operation = $this->contains($aggregate_root) ? 'update' : 'insert';
+
+        $this->storage->$operation($aggregate_root);
+
+        return $aggregate_root;
     }
 
     /**
      * Set element.
      */
-    public function set(AggregateRoot $model) : AggregateRoot
+    public function set(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        return $this->add($model);
+        return $this->add($aggregate_root);
     }
 
     /**
@@ -77,11 +78,11 @@ class Repository
      */
     public function remove(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('id.uuid', $aggregate_root->getId()->toString()));
+        $criteria = Criteria::create()->where(Expression\Comparison::eq('id.uuid', $aggregate_root->getId()->toString()));
 
         $this->storage->delete($this->class_name, $criteria);
 
-        return $model;
+        return $aggregate_root;
     }
 
     /**
@@ -89,8 +90,8 @@ class Repository
      */
     public function contains(AggregateRoot $aggregate_root) : bool
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('id.uuid', $aggregate_root->getId()->toString()));
+        $criteria = Criteria::create()->where(Expression\Comparison::eq('id.uuid', $aggregate_root->getId()->toString()));
 
-        return empty($this->storage->select($this->class_name, $criteria));
+        return empty($this->matching($criteria));
     }
 }

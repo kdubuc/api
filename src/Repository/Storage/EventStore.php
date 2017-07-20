@@ -9,7 +9,7 @@ use API\Domain\Message\Event;
 use Doctrine\DBAL\Connection;
 use API\Domain\ValueObject\ID;
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\Expr\Comparison;
+use API\Domain\Expression;
 use Doctrine\Common\Collections\Expr\CompositeExpression;
 
 class EventStore implements Storage
@@ -66,10 +66,10 @@ class EventStore implements Storage
         if (!empty($where_expression)) {
             $expressions = $where_expression instanceof CompositeExpression ? $where_expression->getExpressionList() : [$where_expression];
             foreach ($expressions as $expression) {
-                if ($expression instanceof Comparison && $expression->getField() == 'id.uuid') {
-                    if ($expression->getOperator() == Comparison::EQ) {
+                if ($expression instanceof Expression\Comparison && $expression->getField() == 'id.uuid') {
+                    if ($expression->getOperator() == 'eq') {
                         $ids[] = $expression->getValue()->getValue();
-                    } elseif ($expression->getOperator() == Comparison::IN) {
+                    } elseif ($expression->getOperator() == 'in') {
                         $ids = $ids + $expression->getValue()->getValue();
                     }
                     $criteria_on_id_field_exists = true;
@@ -80,8 +80,7 @@ class EventStore implements Storage
             $query->select('DISTINCT emitter_id')
                 ->where('emitter_class_name = :class_name')
                 ->setParameter('class_name', $class_name);
-            //$operation = $where_expression ? 'andWhere' : 'where';
-            $criteria->andWhere(Criteria::expr()->in('id.uuid', array_column($this->dbal->fetchAll($query, $query->getParameters()), 'emitter_id')));
+            $criteria->andWhere(Expression\Comparison::in('id.uuid', array_column($this->dbal->fetchAll($query, $query->getParameters()), 'emitter_id')));
 
             return $this->select($class_name, $criteria);
         }

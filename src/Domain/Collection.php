@@ -106,29 +106,22 @@ class Collection extends ArrayCollection implements Normalizable
 
         // Filtering
         if ($expr = $criteria->getWhereExpression()) {
-            $visitor    = new Expression\Visitor();
-            $filter     = $visitor->dispatch($expr);
-            $filtered   = array_filter($this->getData(), $filter);
-            $collection = $collection->createFrom($filtered);
+            $filter = Expression\Translator\Closure::translateExpression($expr);
+            $collection = $collection->filter($filter);
         }
 
         // Ordering
         if ($orderings = $criteria->getOrderings()) {
-            $next = null;
-            foreach (array_reverse($orderings) as $field => $ordering) {
-                $next = Expression\Visitor::sortByField($field, $ordering == Criteria::DESC ? -1 : 1, $next);
-            }
-            $filtered = $collection->getData();
-            uasort($filtered, $next);
-            $collection = $collection->createFrom($filtered);
+            $order = Expression\Translator\Closure::translateOrderings($orderings);
+            $collection = $order($collection);
         }
 
         // Slice
         $offset = $criteria->getFirstResult();
         $length = $criteria->getMaxResults();
         if ($offset || $length) {
-            $filtered   = array_slice($collection->getData(), (int) $offset, $length);
-            $collection = $collection->createFrom($filtered);
+            $slice = Expression\Translator\Closure::translateSlicing((int) $length, (int) $offset);
+            $collection = $slice($collection);
         }
 
         return $collection;
