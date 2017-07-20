@@ -160,7 +160,7 @@ class Closure extends Translator
             return $this->dispatch($expression);
         }, $logical->getExpressionList());
 
-        switch($expr->getType()) {
+        switch($logical->getType()) {
             case 'and':
                 return function ($object) use ($expressions) : bool {
                     foreach ($expressions as $expression) {
@@ -180,7 +180,7 @@ class Closure extends Translator
                     return false;
                 };
             default:
-                throw new RuntimeException("Unknown composite " . $expr->getType());
+                throw new RuntimeException("Unknown composite " . $logical->getType());
         }
     }
 }
