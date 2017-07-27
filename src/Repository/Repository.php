@@ -2,6 +2,7 @@
 
 namespace API\Repository;
 
+use Pagerfanta;
 use API\Domain\Collection;
 use API\Domain\Expression;
 use API\Domain\AggregateRoot;
@@ -27,6 +28,33 @@ class Repository
     public function all() : Collection
     {
         return $this->matching(Criteria::create())->morph($this->collection_class_name);
+    }
+
+    /**
+     * Paginate all elements from a selectable that match the expression.
+     */
+    public function paginate(Criteria $criteria, int $page = 1, int $rows_per_page = 10) : Pagerfanta\Pagerfanta
+    {
+        // Criteria without limit and skip orders (we don't need them here)
+        $criteria->setFirstResult(null);
+        $criteria->setMaxResults(null);
+
+        // Process the query (to obtains the number of results)
+        $results    = $this->matching($criteria);
+        $nb_results = count($results);
+
+        // We slice the results
+        $criteria = Criteria::create()->setMaxResults($rows_per_page)->setFirstResult($rows_per_page * ($page - 1));
+        $results  = $results->matching($criteria);
+
+        // Build pagerfanta object
+        $adapter    = new Pagerfanta\Adapter\FixedAdapter($nb_results, $results);
+        $pagerfanta = new Pagerfanta\Pagerfanta($adapter);
+
+        // Set rows per page and current page
+        $pagerfanta->setMaxPerPage($rows_per_page)->setCurrentPage($page);
+
+        return $pagerfanta;
     }
 
     /**

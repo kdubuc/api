@@ -5,12 +5,12 @@ namespace API\Http;
 use League\Fractal;
 use RuntimeException;
 use API\Domain\Collection;
+use Pagerfanta\Pagerfanta;
 use API\Feature\KernelAccess;
-use API\Repository\Repository;
 use API\Transformer\Transformer;
 use API\Domain\ValueObject\ValueObject;
-use Doctrine\Common\Collections\Criteria;
 use Psr\Http\Message\ResponseInterface as Response;
+use League\Fractal\Pagination\PagerfantaPaginatorAdapter as FractalPaginatorAdapter;
 
 abstract class Http
 {
@@ -135,16 +135,18 @@ abstract class Http
     /**
      * Paginate.
      */
-    public function pagination(Response $response, Repository $repository, Transformer $transformer, $page = 1, int $rows_per_page = 10, Criteria $criteria = null, string $collection_class_name = "API\\Domain\\Collection") : Response
+    public function pagination(Response $response, Pagerfanta $paginator, Transformer $transformer, int $status = self::STATUS_OK) : Response
     {
-        if (empty($criteria)) {
-            $criteria = Criteria::create();
-        }
+        $resource = new Fractal\Resource\Collection($paginator->getCurrentPageResults(), $transformer);
 
-        $criteria->setMaxResults($rows_per_page)->setFirstResult($rows_per_page * ($page - 1));
+        $resource->setPaginator(new FractalPaginatorAdapter($paginator, function ($page) {
+            return null;
+        }));
 
-        $collection = $repository->matching($criteria)->morph($collection_class_name);
+        $data = $this->getKernel()->get('fractal.json')->createData($resource)->toArray();
 
-        return $this->collection($response, $collection, $transformer);
+        unset($data['meta']['pagination']['links']);
+
+        return $this->json($response, $data, $status);
     }
 }
