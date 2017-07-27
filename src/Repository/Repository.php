@@ -3,10 +3,10 @@
 namespace API\Repository;
 
 use API\Domain\Collection;
+use API\Domain\Expression;
 use API\Domain\AggregateRoot;
 use API\Domain\ValueObject\ID;
 use API\Repository\Storage\Storage;
-use API\Domain\Expression;
 use Doctrine\Common\Collections\Criteria;
 
 class Repository
@@ -14,10 +14,11 @@ class Repository
     /**
      * Build the repository with a storage strategy.
      */
-    public function __construct(string $class_name, Storage $storage)
+    public function __construct(string $class_name, Storage $storage, string $collection_class_name = 'API\\Domain\\Collection')
     {
-        $this->storage    = $storage;
-        $this->class_name = $class_name;
+        $this->storage               = $storage;
+        $this->class_name            = $class_name;
+        $this->collection_class_name = $collection_class_name;
     }
 
     /**
@@ -25,7 +26,7 @@ class Repository
      */
     public function all() : Collection
     {
-        return $this->matching(Criteria::create());
+        return $this->matching(Criteria::create())->morph($this->collection_class_name);
     }
 
     /**
@@ -34,7 +35,7 @@ class Repository
      */
     public function matching(Criteria $criteria) : Collection
     {
-        return $this->storage->select($this->class_name, $criteria);
+        return $this->storage->select($this->class_name, $criteria)->morph($this->collection_class_name);
     }
 
     /**
