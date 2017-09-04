@@ -3,9 +3,9 @@
 namespace API\Repository\Storage\ExpressionVisitor;
 
 use RuntimeException;
-use Doctrine\Common\Collections\Criteria;
 use API\Domain\Expression\Logical;
 use API\Domain\Expression\Comparison;
+use Doctrine\Common\Collections\Criteria;
 use API\Domain\Expression\Translator\Translator;
 
 class MongoDB extends Translator
@@ -16,11 +16,11 @@ class MongoDB extends Translator
     public static function translateOrderings(array $orderings)
     {
         return [];
-        
+
         return [
-            'sort' => array_merge(array_map(function(string $column, string $sort) {
+            'sort' => array_merge(array_map(function (string $column, string $sort) {
                 return [$column => $sort == Criteria::ASC ? 1 : -1];
-            }, array_keys($orderings), $orderings))
+            }, array_keys($orderings), $orderings)),
         ];
     }
 
@@ -31,7 +31,7 @@ class MongoDB extends Translator
     {
         return [
             'limit' => $limit,
-            'skip' => (int) $skip,
+            'skip'  => (int) $skip,
         ];
     }
 
@@ -41,38 +41,39 @@ class MongoDB extends Translator
     protected function translateComparison(Comparison $comparison)
     {
         // Field path using dot notation
-        $field = $comparison->getField();
+        // $field = $comparison->getField();
+        $field = preg_replace("/data./", "", $comparison->getField(), 1);
 
         // Comparison value
         $value = $this->walkValue($comparison->getValue());
 
         // Return the correct query language in function of the operator used
         switch ($comparison->getOperator()) {
-            case "eq":
+            case 'eq':
                 return [$field => $value];
 
-            case "neq":
+            case 'neq':
                 return [$field => ['$ne' => $value]];
 
-            case "lt":
+            case 'lt':
                 return [$field => ['$lt' => $value]];
 
-            case "lte":
+            case 'lte':
                 return [$field => ['$lte' => $value]];
 
-            case "gt":
+            case 'gt':
                 return [$field => ['$gt' => $value]];
 
-            case "gte":
+            case 'gte':
                 return [$field => ['$gte' => $value]];
 
-            case "in":
+            case 'in':
                 return [$field => ['$in' => $value]];
 
-            case "nin":
+            case 'nin':
                 return [$field => ['$nin' => $value]];
 
-            case "contains":
+            case 'contains':
                 return [$field => ['$regex' => ".*$value.*"]];
 
             default:
@@ -85,17 +86,17 @@ class MongoDB extends Translator
      */
     protected function translateLogical(Logical $logical)
     {
-        $expressions = array_map(function($expression) {
+        $expressions = array_map(function ($expression) {
             return $this->dispatch($expression);
         }, $logical->getExpressionList());
 
-        switch($expr->getType()) {
+        switch ($logical->getType()) {
             case 'and':
                 return ['$and' => $expressions];
             case 'or':
                 return ['$or' => $expressions];
             default:
-                throw new RuntimeException("Unknown composite " . $expr->getType());
+                throw new RuntimeException('Unknown composite '.$logical->getType());
         }
     }
 }

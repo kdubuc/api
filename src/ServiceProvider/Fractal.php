@@ -16,6 +16,7 @@ class Fractal extends ServiceProvider
         $container['fractal.json'] = function () {
             $fractal = new FractalManager();
             $fractal->setSerializer(new FractalSerializer());
+
             return $fractal;
         };
 
@@ -26,15 +27,18 @@ class Fractal extends ServiceProvider
                 {
                     return array_merge(['type' => 'Feature'], $data);
                 }
-                public function collection($resourceKey, array $data) {
+
+                public function collection($resourceKey, array $data)
+                {
                     return [
-                        'type' => 'FeatureCollection',
-                        'features' => array_map(function($feature) {
+                        'type'     => 'FeatureCollection',
+                        'features' => array_map(function ($feature) {
                             return $this->item(null, $feature);
-                        }, $data)
+                        }, $data),
                     ];
                 }
             });
+
             return $fractal;
         };
     }

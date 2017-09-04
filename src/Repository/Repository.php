@@ -71,7 +71,7 @@ class Repository
      */
     public function get(ID $id) : AggregateRoot
     {
-        $criteria = Criteria::create()->where(Expression\Comparison::eq('id.uuid', $id->toString()));
+        $criteria = Criteria::create()->where(Expression\Comparison::eq('data.id.uuid', $id->toString()));
 
         $collection = $this->matching($criteria);
 
@@ -107,7 +107,7 @@ class Repository
      */
     public function remove(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        $criteria = Criteria::create()->where(Expression\Comparison::eq('id.uuid', $aggregate_root->getId()->toString()));
+        $criteria = Criteria::create()->where(Expression\Comparison::eq('data.id.uuid', $aggregate_root->getId()->toString()));
 
         $this->storage->delete($this->class_name, $criteria);
 
@@ -119,7 +119,7 @@ class Repository
      */
     public function contains(AggregateRoot $aggregate_root) : bool
     {
-        $criteria = Criteria::create()->where(Expression\Comparison::eq('id.uuid', $aggregate_root->getId()->toString()));
+        $criteria = Criteria::create()->where(Expression\Comparison::eq('data.id.uuid', $aggregate_root->getId()->toString()));
 
         return empty($this->matching($criteria));
     }

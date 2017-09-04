@@ -105,4 +105,52 @@ abstract class ValueObject implements JsonSerializable, Normalizable
     {
         return json_encode($this->normalize());
     }
+
+    /**
+     * Query collection field using dot notation (https://docs.mongodb.com/manual/core/document/#document-dot-notation).
+     */
+    public function query(string $field) : array
+    {
+        // Get the current segment from the field parameter, and update pendings
+        // segments
+        $pending_segments = explode('.', $field);
+        $current_segment = array_shift($pending_segments);
+
+        // Get normalized object
+        $value = $this->normalize();
+
+        // Handle the nested array case ...
+        // and update the normalized data with the data on the current segment
+        if(!array_key_exists($current_segment, $value) && array_key_exists($current_segment, reset($value))) {
+            $value = array_map(function($data) use ($current_segment) {
+                return $data[$current_segment];
+            }, $value);
+        }
+        else {
+            $value = $value[$current_segment];
+        }
+
+        // If there aren't segments left, we try to return a Normalizable corresponding
+        // with the field, or simple data.
+        if(empty($pending_segments)) {
+
+            $value = is_array($value) ? $value : [$value];
+
+            return array_map(function($data) {
+                return static::isDenormalizable($data) ? $data['class_name']::denormalize($data) : $data;
+            }, $value);
+
+        }
+
+        // We dig into the normalized object (Recursive way baby o/)
+        return $this->query(implode('.', $pending_segments));
+    }
+
+    /**
+     * Test if data can be denormalized to obtain Normalizable object.
+     */
+    public static function isDenormalizable($data) : bool
+    {
+        return is_array($data) && array_key_exists('class_name', $data) && is_a($data['class_name'], Normalizable::class, true);
+    }
 }

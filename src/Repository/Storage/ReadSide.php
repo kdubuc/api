@@ -2,15 +2,11 @@
 
 namespace API\Repository\Storage;
 
-use ReflectionClass;
+use MongoDB;
 use API\Domain\Collection;
 use API\Domain\AggregateRoot;
-use API\Domain\Message\Event;
-use MongoDB;
 use API\Domain\ValueObject\ID;
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\Expr\Comparison;
-use Doctrine\Common\Collections\Expr\CompositeExpression;
 
 class ReadSide implements Storage
 {
@@ -30,11 +26,11 @@ class ReadSide implements Storage
     {
         $collection_name = get_class($aggregate_root);
 
-        $collections = array_map(function($collection) {
+        $collections = array_map(function ($collection) {
             return $collection->getName();
         }, (array) $this->mongodb->listCollections());
 
-        if(in_array($collection_name, $collections)) {
+        if (in_array($collection_name, $collections)) {
             $this->mongodb->createCollection($collection_name);
         }
 
@@ -73,7 +69,7 @@ class ReadSide implements Storage
 
         // Prepare the query filter
         $filter = [];
-        if($expression = $criteria->getWhereExpression()) {
+        if ($expression = $criteria->getWhereExpression()) {
             $filter = ExpressionVisitor\MongoDB::translateExpression($expression);
         }
 
@@ -96,8 +92,9 @@ class ReadSide implements Storage
         $cursor = $this->mongodb->$class_name->find($filter, $options);
 
         // Build all aggregate roots
-        $collection = $class_name::collection(array_map(function($document) use ($class_name) {
+        $collection = $class_name::collection(array_map(function ($document) use ($class_name) {
             $document = json_decode(json_encode($document), true);
+
             return $class_name::denormalize($document);
         }, $cursor->toArray() ?? []));
 
@@ -121,9 +118,9 @@ class ReadSide implements Storage
 
         $collection_name = get_class($aggregate_root);
 
-        $collection = $this->getCollectionFor($aggregate_root);;
+        $collection = $this->getCollectionFor($aggregate_root);
 
-        foreach($old_collection as $aggregate_root) {
+        foreach ($old_collection as $aggregate_root) {
             $collection->deleteOne(['id.uuid' => $aggregate_root->getId()->toString()]);
         }
 

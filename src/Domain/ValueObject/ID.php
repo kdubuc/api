@@ -3,8 +3,8 @@
 namespace API\Domain\ValueObject;
 
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidFactory;
 use API\Domain\Normalizable;
+use Ramsey\Uuid\UuidFactory;
 
 class ID extends ValueObject
 {

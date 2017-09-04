@@ -2,8 +2,8 @@
 
 namespace API\Domain\ValueObject;
 
-use Datetime as DatetimeBase;
 use API\Domain\Normalizable;
+use Datetime as DatetimeBase;
 
 class Datetime extends ValueObject
 {

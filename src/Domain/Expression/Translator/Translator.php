@@ -2,15 +2,13 @@
 
 namespace API\Domain\Expression\Translator;
 
-use RuntimeException;
-use API\Domain\Normalizable;
-use API\Domain\Expression\Comparison;
 use API\Domain\Expression\Logical;
+use API\Domain\Expression\Comparison;
 use Doctrine\Common\Collections\Expr\Value;
 use Doctrine\Common\Collections\Expr\Expression;
+use Doctrine\Common\Collections\Expr\ExpressionVisitor;
 use Doctrine\Common\Collections\Expr\CompositeExpression;
 use Doctrine\Common\Collections\Expr\Comparison as DoctrineComparaison;
-use Doctrine\Common\Collections\Expr\ExpressionVisitor;
 
 abstract class Translator extends ExpressionVisitor
 {
@@ -55,13 +53,14 @@ abstract class Translator extends ExpressionVisitor
      */
     public function walkCompositeExpression(CompositeExpression $expr)
     {
-        if(!($expr instanceof Logical)) {
-            $transformer = function($expr) use ( &$transformer ) {
-                if(!($expr instanceof Logical) && ($expr instanceof CompositeExpression)) {
-                    $type = $expr->getType() == 'AND' ? 'and' : 'or';
+        if (!($expr instanceof Logical)) {
+            $transformer = function ($expr) use (&$transformer) {
+                if (!($expr instanceof Logical) && ($expr instanceof CompositeExpression)) {
+                    $type        = $expr->getType() == 'AND' ? 'and' : 'or';
                     $expressions = array_map($transformer, $expr->getExpressionList());
-                    $expr = Logical::$type($expressions);
+                    $expr        = Logical::$type($expressions);
                 }
+
                 return $expr;
             };
             $expr = $transformer($expr);
