@@ -104,7 +104,7 @@ class Collection extends ArrayCollection implements Normalizable
             };
 
             $value = array_map(function($data) use($current_segment, $array_find_nested_key) {
-                return $array_find_nested_key($current_segment, $data);
+                return is_null($data) ? null : $array_find_nested_key($current_segment, $data);
             }, $value);
 
         }
