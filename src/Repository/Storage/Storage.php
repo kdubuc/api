@@ -27,4 +27,9 @@ interface Storage
      * Update model.
      */
     public function update(AggregateRoot $aggregate_root) : AggregateRoot;
+
+    /**
+     * Count results.
+     */
+    public function count($class_name, Criteria $criteria = null) : int;
 }

@@ -39,13 +39,12 @@ class Repository
         $criteria->setFirstResult(null);
         $criteria->setMaxResults(null);
 
-        // Process the query (to obtains the number of results)
-        $results    = $this->matching($criteria);
-        $nb_results = count($results);
+        // Count results without paginate
+        $nb_results = $this->storage->count($this->class_name, $criteria);
 
         // We slice the results
         $criteria = Criteria::create()->setMaxResults($rows_per_page)->setFirstResult($rows_per_page * ($page - 1));
-        $results  = $results->matching($criteria);
+        $results  = $this->matching($criteria);
 
         // Build pagerfanta object
         $adapter    = new Pagerfanta\Adapter\FixedAdapter($nb_results, $results);

@@ -149,4 +149,12 @@ class EventStore implements Storage
     {
         return $class_name::collection([$this->insert($aggregate_root)]);
     }
+
+    /**
+     * Count results.
+     */
+    public function count($class_name, Criteria $criteria = null) : int
+    {
+        return $this->select($class_name, $criteria)->count();
+    }
 }
