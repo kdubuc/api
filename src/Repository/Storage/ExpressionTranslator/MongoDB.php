@@ -15,12 +15,10 @@ class MongoDB extends Translator
      */
     public static function translateOrderings(array $orderings)
     {
-        return [];
-
         return [
-            'sort' => array_merge(array_map(function (string $column, string $sort) {
-                return [$column => $sort == Criteria::ASC ? 1 : -1];
-            }, array_keys($orderings), $orderings)),
+            'sort' => array_map(function($sort) {
+                return $sort == Criteria::ASC ? 1 : -1;
+            }, $orderings)
         ];
     }
 
