@@ -43,7 +43,7 @@ class Repository
         $nb_results = $this->storage->count($this->class_name, $criteria);
 
         // We slice the results
-        $criteria = Criteria::create()->setMaxResults($rows_per_page)->setFirstResult($rows_per_page * ($page - 1));
+        $criteria = $criteria->setMaxResults($rows_per_page)->setFirstResult($rows_per_page * ($page - 1));
         $results  = $this->matching($criteria);
 
         // Build pagerfanta object

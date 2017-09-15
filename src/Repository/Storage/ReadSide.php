@@ -136,10 +136,9 @@ class ReadSide implements Storage
         // count the collection.
         if (!empty($criteria) && $expression = $criteria->getWhereExpression()) {
             $filter = ExpressionVisitor\MongoDB::translateExpression($expression);
-            return $this->mongodb->$class_name->find($filter)->count();
+            return $this->mongodb->$class_name->count($filter);
         }
-        else {
-            return $this->mongodb->$class_name->count();
-        }
+
+        return $this->mongodb->$class_name->count();
     }
 }
