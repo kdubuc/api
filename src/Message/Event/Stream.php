@@ -16,15 +16,7 @@ class Stream extends Emitter implements IteratorAggregate
     use KernelAccess;
 
     /**
-     * Enable Traversable.
-     */
-    public function getIterator() : Traversable
-    {
-        return new ArrayIterator($this->getEventsEmitted());
-    }
-
-    /**
-     * Build the bus.
+     * Build the stream.
      */
     public function __construct(Container $container = null)
     {
@@ -33,7 +25,7 @@ class Stream extends Emitter implements IteratorAggregate
     }
 
     /**
-     * Get all events emitted.
+     * Get all events emitted in chronological order (old -> new).
      */
     public function getEventsEmitted() : array
     {
@@ -81,5 +73,13 @@ class Stream extends Emitter implements IteratorAggregate
         } while ($tick_count * $tick_delay < $timeout * 1000000);
 
         throw new Exception('Timeout reached');
+    }
+
+    /**
+     * Enable Traversable.
+     */
+    public function getIterator() : Traversable
+    {
+        return new ArrayIterator($this->getEventsEmitted());
     }
 }
