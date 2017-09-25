@@ -179,6 +179,14 @@ class Collection extends ArrayCollection implements Normalizable
     }
 
     /**
+     * Array map (https://secure.php.net/manual/fr/function.array-map.php)
+     */
+    public function map(Closure $p) : Collection
+    {
+        return $this->createFrom(array_map($p, $this->elements));
+    }
+
+    /**
      * Matching.
      */
     public function matching(Criteria $criteria) : Collection
