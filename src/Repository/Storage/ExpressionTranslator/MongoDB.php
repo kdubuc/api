@@ -16,9 +16,9 @@ class MongoDB extends Translator
     public static function translateOrderings(array $orderings)
     {
         return [
-            'sort' => array_map(function($sort) {
-                return $sort == Criteria::ASC ? 1 : -1;
-            }, $orderings)
+            'sort' => array_map(function ($sort) {
+                return Criteria::ASC == $sort ? 1 : -1;
+            }, $orderings),
         ];
     }
 
@@ -40,7 +40,7 @@ class MongoDB extends Translator
     {
         // Field path using dot notation
         // $field = $comparison->getField();
-        $field = preg_replace("/data./", "", $comparison->getField(), 1);
+        $field = preg_replace('/data./', '', $comparison->getField(), 1);
 
         // Comparison value
         $value = $this->walkValue($comparison->getValue());

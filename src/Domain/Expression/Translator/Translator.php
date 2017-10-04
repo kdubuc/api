@@ -56,7 +56,7 @@ abstract class Translator extends ExpressionVisitor
         if (!($expr instanceof Logical)) {
             $transformer = function ($expr) use (&$transformer) {
                 if (!($expr instanceof Logical) && ($expr instanceof CompositeExpression)) {
-                    $type        = $expr->getType() == 'AND' ? 'and' : 'or';
+                    $type        = 'AND' == $expr->getType() ? 'and' : 'or';
                     $expressions = array_map($transformer, $expr->getExpressionList());
                     $expr        = Logical::$type($expressions);
                 }

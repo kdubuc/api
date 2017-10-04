@@ -5,7 +5,6 @@ namespace API\Message\Event;
 use Exception;
 use Traversable;
 use ArrayIterator;
-use API\Message\Bus;
 use IteratorAggregate;
 use League\Event\Emitter;
 use API\Feature\KernelAccess;
@@ -67,7 +66,7 @@ class Stream extends Emitter implements IteratorAggregate
             $message = array_shift($messages);
 
             // If the element is not null, return the event !
-            if ($message !== null) {
+            if (null !== $message) {
                 return $message;
             }
         } while ($tick_count * $tick_delay < $timeout * 1000000);

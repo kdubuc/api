@@ -29,7 +29,7 @@ abstract class AggregateRoot extends Entity implements ListenerInterface
      */
     public function getEventStream() : Stream
     {
-        if (!property_exists($this, 'event_stream') || $this->event_stream === null) {
+        if (!property_exists($this, 'event_stream') || null === $this->event_stream) {
             $this->event_stream = new Stream();
 
             $this->event_stream->addListener('*', $this);

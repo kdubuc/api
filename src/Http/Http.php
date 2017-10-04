@@ -123,7 +123,7 @@ abstract class Http
         $body->rewind();
         $body->write($json = json_encode($data));
 
-        if ($json === false) {
+        if (false === $json) {
             throw new RuntimeException(json_last_error_msg(), json_last_error());
         }
 

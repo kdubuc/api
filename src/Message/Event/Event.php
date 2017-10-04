@@ -31,7 +31,7 @@ abstract class Event extends Message implements EventInterface
      */
     public function stopPropagation() : void
     {
-        $this->propagation_stopped === true;
+        true === $this->propagation_stopped;
     }
 
     /**
@@ -39,6 +39,6 @@ abstract class Event extends Message implements EventInterface
      */
     public function isPropagationStopped() : bool
     {
-        return property_exists($this, 'propagation_stopped') && $this->propagation_stopped === true;
+        return property_exists($this, 'propagation_stopped') && true === $this->propagation_stopped;
     }
 }
