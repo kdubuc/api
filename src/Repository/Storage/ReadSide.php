@@ -116,11 +116,8 @@ class ReadSide implements Storage
     {
         $old_collection = $this->select($class_name, $criteria);
 
-        $collection_name = get_class($aggregate_root);
-
-        $collection = $this->getCollectionFor($aggregate_root);
-
         foreach ($old_collection as $aggregate_root) {
+            $collection = $this->getCollectionFor($aggregate_root);
             $collection->deleteOne(['id.uuid' => $aggregate_root->getId()->toString()]);
         }
 
@@ -136,6 +133,7 @@ class ReadSide implements Storage
         // count the collection.
         if (!empty($criteria) && $expression = $criteria->getWhereExpression()) {
             $filter = ExpressionVisitor\MongoDB::translateExpression($expression);
+
             return $this->mongodb->$class_name->count($filter);
         }
 
