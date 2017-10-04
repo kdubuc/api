@@ -4,7 +4,6 @@ namespace API\Domain\Expression\Translator;
 
 use RuntimeException;
 use API\Domain\Collection;
-use API\Domain\Normalizable;
 use API\Domain\Expression\Logical;
 use API\Domain\Expression\Comparison;
 use Doctrine\Common\Collections\Criteria;
@@ -25,7 +24,6 @@ class Closure extends Translator
             }
 
             return function ($a, $b) use ($name, $next, $orientation) : int {
-
                 $aValue = $a->query($name);
                 $bValue = $b->query($name);
 
@@ -41,7 +39,8 @@ class Closure extends Translator
             $next = null;
 
             foreach (array_reverse($orderings) as $field => $ordering) {
-                $next = $sortByField($field, $ordering == Criteria::DESC ? -1 : 1, $next);
+                $field = mb_substr($field, 5);
+                $next  = $sortByField($field, Criteria::DESC == $ordering ? -1 : 1, $next);
             }
 
             $data = $collection->getData();
@@ -82,8 +81,7 @@ class Closure extends Translator
         // Operator
         $operator = $comparison->getOperator();
 
-        return function(Collection $collection) use ($operator, $field, $value) {
-
+        return function (Collection $collection) use ($operator, $field, $value) {
             // Select the correct filter
             switch ($operator) {
                 case 'eq':
@@ -146,7 +144,7 @@ class Closure extends Translator
 
             $indexes_match = array_keys(array_filter($collection->query($field), $filter));
 
-            return new Collection(array_filter(array_values($collection->toArray()), function($element, $key) use ($indexes_match) {
+            return new Collection(array_filter(array_values($collection->toArray()), function ($element, $key) use ($indexes_match) {
                 return in_array($key, $indexes_match);
             }, ARRAY_FILTER_USE_BOTH));
         };
