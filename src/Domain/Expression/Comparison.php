@@ -5,7 +5,7 @@ namespace API\Domain\Expression;
 use Exception;
 use Doctrine\Common\Collections\Expr\Comparison as DoctrineComparison;
 
-class Comparison extends DoctrineComparison
+class Comparison extends DoctrineComparison implements Expression
 {
     /**
      * Comparison helper.

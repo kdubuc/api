@@ -5,7 +5,7 @@ namespace API\Domain\Expression;
 use Exception;
 use Doctrine\Common\Collections\Expr\CompositeExpression;
 
-class Logical extends CompositeExpression
+class Logical extends CompositeExpression implements Expression
 {
     /**
      * Logical helper.

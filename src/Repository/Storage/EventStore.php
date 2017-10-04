@@ -2,27 +2,23 @@
 
 namespace API\Repository\Storage;
 
+use MongoDB;
 use ReflectionClass;
 use API\Domain\Collection;
 use API\Domain\Expression;
 use API\Domain\AggregateRoot;
 use API\Domain\Message\Event;
-use Doctrine\DBAL\Connection;
 use API\Domain\ValueObject\ID;
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\Expr\CompositeExpression;
 
 class EventStore implements Storage
 {
     /*
      * Constructeur
-     *
-     * @param Doctrine\DBAL\Connection $connection
      */
-    public function __construct(Connection $connection, $table_name = 'events')
+    public function __construct(MongoDB\Database $database, $collection_name = 'events')
     {
-        $this->dbal       = $connection;
-        $this->table_name = $table_name;
+        $this->collection = $database->{$collection_name};
     }
 
     /**
@@ -30,13 +26,28 @@ class EventStore implements Storage
      */
     public function insert(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        $events = $aggregate_root->getEventStream();
+        // Get the AR new events
+        $events = $aggregate_root->getEventStream()->getEventsEmitted();
 
-        foreach ($events as $event) {
-            $this->dbal->insert($this->table_name, array_merge($event->toArray(), [
-                'payload' => json_encode($event->toArray()['payload']),
-            ]));
+        // Optimistic locking
+        // We find the latest version of the AR in collection
+        $latest_version_of_ar = $this->collection->findOne([
+            'emitter_id' => $aggregate_root->getId()->toString(),
+        ], [
+            'sort' => [
+                'record_date' => 1,
+            ],
+        ]);
+
+        // If the Current AR version < Collection AR version, we abort
+        if (null !== $latest_version_of_ar && $latest_version_of_ar['record_date'] > last($events)->getRecordDate()) {
+            throw new Exception('Optimistic locking');
         }
+
+        // Insert all new events
+        $this->collection->insertMany(array_map(function ($event) {
+            return $event->toArray();
+        }, $events));
 
         return $aggregate_root;
     }
@@ -46,85 +57,93 @@ class EventStore implements Storage
      */
     public function select($class_name, Criteria $criteria = null) : Collection
     {
-        // Get the query builder thanks to the DBAL Connection
-        $query_builder = $this->dbal->createQueryBuilder();
-
-        // Query base : we select all events .
-        $query = $query_builder->select('*')->from($this->table_name);
-
         // If no criteria was provided, we create an empty one.
         if (empty($criteria)) {
             $criteria = new Criteria();
         }
 
-        // To rebuild correctly entities, we need to get all emitters IDs (aka the
-        // id of the entity which raise the event) of the class name and with criterias.
-        // After that, we will filter the results.
-        $ids                         = [];
-        $criteria_on_id_field_exists = false;
-        $where_expression            = $criteria->getWhereExpression();
+        // Base filter : we select all events for class name.
+        $query = ['emitter_class_name' => $class_name];
+
+        // Base options : sort by record_date ASC (for correct rebuilding)
+        $options = [
+            'sort' => [
+                'record_date' => 1,
+            ],
+        ];
+
+        // To rebuild correctly entities, we need to get ALL events (based on
+        // the emitter id field) for all ARs asked, before apply criterias.
+        // If no specific ARs asked, we get them ALL !
+        // So, first, we need to get all asked ids (from where expression or all
+        // disctinct emitter id in collection)
+        if (empty($aggregate_root_ids = $this->extractIdsFromExpression($criteria->getWhereExpression()))) {
+            $aggregate_root_ids = $this->collection->distinct('emitter_id', $query, $options);
+        }
+
+        // Now we have all ARs ids, we can get all events corresponding.
+        $cursor = $this->collection->find(array_merge($query, ['emitter_id' => ['$in' => $aggregate_root_ids]]), $options);
+        $events = array_map(function ($document) {
+            $event = json_decode(json_encode($document), true);
+
+            return $event['name']::recordFromArray($event);
+        }, $cursor->toArray());
+
+        // Rebuild all ARs asked with events and collect them into a domain collection
+        if (!empty($events)) {
+            // Rebuild all ARs
+            $aggregate_roots = array_map(function ($aggregate_root_id) use ($class_name, $events) {
+                return $this->rebuildAggregateRoot($class_name, $aggregate_root_id, $events);
+            }, $aggregate_root_ids);
+
+            // Filter the collection with criteria parameter
+            $collection = $class_name::collection($aggregate_roots)->matching($criteria);
+        } else {
+            $collection = $class_name::collection();
+        }
+
+        // Return the collection which contain all AR o/
+        return $collection;
+    }
+
+    /**
+     * Extract all ids (data.id.uuid) comparison from where expression.
+     */
+    private function extractIdsFromExpression(Expression\Expression $where_expression = null) : array
+    {
+        $ids = [];
+
         if (!empty($where_expression)) {
-            $expressions = $where_expression instanceof CompositeExpression ? $where_expression->getExpressionList() : [$where_expression];
+            $expressions = $where_expression instanceof Expression\Logical ? $where_expression->getExpressionList() : [$where_expression];
+
             foreach ($expressions as $expression) {
-                if ($expression instanceof Expression\Comparison && $expression->getField() == 'data.id.uuid') {
-                    if ($expression->getOperator() == 'eq') {
+                if ($expression instanceof Expression\Comparison && 'data.id.uuid' == $expression->getField()) {
+                    if ('eq' == $expression->getOperator()) {
                         $ids[] = $expression->getValue()->getValue();
-                    } elseif ($expression->getOperator() == 'in') {
+                    } elseif ('in' == $expression->getOperator()) {
                         $ids = $ids + $expression->getValue()->getValue();
                     }
-                    $criteria_on_id_field_exists = true;
                 }
             }
         }
-        if (empty($ids) && !$criteria_on_id_field_exists) {
-            $query->select('DISTINCT emitter_id')
-                ->where('emitter_class_name = :class_name')
-                ->setParameter('class_name', $class_name);
-            $criteria->andWhere(Expression\Comparison::in('data.id.uuid', array_column($this->dbal->fetchAll($query, $query->getParameters()), 'emitter_id')));
 
-            return $this->select($class_name, $criteria);
-        }
-
-        // Now we have all emitters ids. We can get all events corresponding with
-        // the ids and order by record date (for correct rebuilding).
-        $query->where('emitter_id IN (?)')->orderBy('record_date', Criteria::ASC);
-        $stmt   = $this->dbal->executeQuery($query->getSQL(), [$ids], [Connection::PARAM_STR_ARRAY]);
-        $events = array_map(function ($event) {
-            $event['payload'] = json_decode($event['payload'], true);
-
-            return Event::recordFromArray($event);
-        }, $stmt->fetchAll());
-
-        // Group events by emitter id
-        $events_by_emitters = [];
-        foreach ($events as $key => $event) {
-            $events_by_emitters[$event->getEmitterId()->toString()][] = $event;
-        }
-
-        // Initialize a domain collection.
-        $collection = $class_name::collection();
-
-        // Rebuild all models with events and add them in the collection
-        foreach ($events_by_emitters as $event_by_emitter) {
-            $aggregate_root = $this->rebuildAggregateRoot($class_name, $event_by_emitter);
-            $collection->add($aggregate_root);
-        }
-
-        // Filter the collection with criteria
-        $collection = $collection->matching($criteria);
-
-        return $collection;
+        return $ids;
     }
 
     /**
      * Rebuild model.
      */
-    private function rebuildAggregateRoot(string $class_name, array $events = []) : AggregateRoot
+    private function rebuildAggregateRoot(string $class_name, string $aggregate_root_id, array $events) : AggregateRoot
     {
         // Initialize an empty model (without call construct because it has to be
         // initialized like an empty shell)
         $reflection     = new ReflectionClass($class_name);
         $aggregate_root = $reflection->newInstanceWithoutConstructor();
+
+        // Filter events to keep only AR events
+        $events = array_filter($events, function ($event) use ($aggregate_root_id) {
+            return $event->getEmitterId()->toString() == $aggregate_root_id;
+        });
 
         // Fire all events against the model
         foreach ($events as $event) {
@@ -132,6 +151,24 @@ class EventStore implements Storage
         }
 
         return $aggregate_root;
+    }
+
+    /**
+     * Upgrade event.
+     */
+    public function upgradeEvent(string $deprecated_event_name, callable $callable) : void
+    {
+        $deprecated_events_query = [['name' => $deprecated_event_name]];
+
+        $deprecated_events = $this->collection->find($deprecated_events_query);
+
+        $new_events = array_map($callable, $deprecated_events);
+
+        $this->collection->deleteMany($deprecated_events_query);
+
+        $this->collection->insertMany(array_map(function ($event) {
+            return $event->toArray();
+        }, $new_events));
     }
 
     /**
@@ -147,7 +184,11 @@ class EventStore implements Storage
      */
     public function delete($class_name, Criteria $criteria = null) : Collection
     {
-        return $class_name::collection([$this->insert($aggregate_root)]);
+        $aggregate_roots = $this->select($class_name, $criteria);
+
+        // TODO: Fire delete event to all ARs
+
+        return $aggregate_roots;
     }
 
     /**
