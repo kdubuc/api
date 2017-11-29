@@ -19,6 +19,7 @@ class Kernel extends Pimple implements Container
 
         // If the debug mode is activated, enable error details display.
         $values['settings']['displayErrorDetails'] = true === $values['debug'];
+        error_reporting($values['settings']['displayErrorDetails'] ? -1 : 0);
 
         // Provide defaults services
         $this->provide(new ServiceProvider\Slim());
