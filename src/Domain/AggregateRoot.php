@@ -2,6 +2,7 @@
 
 namespace API\Domain;
 
+use ReflectionClass;
 use API\Domain\Message\Event;
 use API\Feature\Polymorphism;
 use API\Message\Event\Stream;
@@ -64,5 +65,23 @@ abstract class AggregateRoot extends Entity implements ListenerInterface
     public function isListener($listener) : bool
     {
         return $this === $listener;
+    }
+
+    /**
+     * Rebuild the AR from a list of events.
+     */
+    public static function rebuildFromEvents(array $events) : self
+    {
+        // Initialize an empty model (without calling construct because it has to be
+        // initialized like an empty shell)
+        $reflection     = new ReflectionClass(get_called_class());
+        $aggregate_root = $reflection->newInstanceWithoutConstructor();
+
+        // Fire all events against the AR
+        foreach ($events as $event) {
+            $aggregate_root->handle($event);
+        }
+
+        return $aggregate_root;
     }
 }
