@@ -8,10 +8,10 @@ use API\Domain\AggregateRoot;
 use API\Domain\ValueObject\ID;
 use Doctrine\Common\Collections\Criteria;
 
-class ReadSide implements Storage
+class KeyValue implements Storage
 {
     /*
-     * Constructeur
+     * Constructor
      */
     public function __construct(MongoDB\Database $database)
     {
