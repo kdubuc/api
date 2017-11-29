@@ -31,7 +31,7 @@ class Datetime extends ValueObject
     public function normalize() : array
     {
         return [
-            'iso8601'    => $this->datetime->format('c'),
+            'iso8601'    => $this->datetime->format('Y-m-d\TH:i:s.uP'),
             'class_name' => get_class($this),
         ];
     }
@@ -41,7 +41,7 @@ class Datetime extends ValueObject
      */
     public static function denormalize(array $data) : Normalizable
     {
-        $datetime = DatetimeBase::createFromFormat('Y-m-d\TH:i:sP', $data['iso8601']);
+        $datetime = DatetimeBase::createFromFormat('Y-m-d\TH:i:s.uP', $data['iso8601']);
 
         return new self($datetime);
     }
