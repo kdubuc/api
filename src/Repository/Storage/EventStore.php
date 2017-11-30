@@ -3,7 +3,6 @@
 namespace API\Repository\Storage;
 
 use MongoDB;
-use ReflectionClass;
 use API\Domain\Collection;
 use API\Domain\Expression;
 use API\Domain\AggregateRoot;
@@ -18,7 +17,7 @@ class EventStore implements Storage
      */
     public function __construct(MongoDB\Database $database, $collection_name = 'events')
     {
-        $this->collection = $database->{$collection_name};
+        $this->events = $database->{$collection_name};
     }
 
     /**
@@ -26,12 +25,13 @@ class EventStore implements Storage
      */
     public function insert(AggregateRoot $aggregate_root) : AggregateRoot
     {
-        // Get the AR new events
+        // Get the AR new events to be persisted
         $events = $aggregate_root->getEventStream()->getEventsEmitted();
 
         // Optimistic locking
+
         // We find the latest version of the AR in collection
-        $latest_version_of_ar = $this->collection->findOne([
+        $latest_version_of_ar = $this->events->findOne([
             'emitter_id' => $aggregate_root->getId()->toString(),
         ], [
             'sort' => [
@@ -40,12 +40,12 @@ class EventStore implements Storage
         ]);
 
         // If the Current AR version < Collection AR version, we abort
-        if (null !== $latest_version_of_ar && $latest_version_of_ar['record_date'] > last($events)->getRecordDate()) {
+        if (null !== $latest_version_of_ar && $latest_version_of_ar['record_date'] > end($events)->getRecordDate()) {
             throw new Exception('Optimistic locking');
         }
 
         // Insert all new events
-        $this->collection->insertMany(array_map(function ($event) {
+        $this->events->insertMany(array_map(function ($event) {
             return $event->toArray();
         }, $events));
 
@@ -78,32 +78,32 @@ class EventStore implements Storage
         // So, first, we need to get all asked ids (from where expression or all
         // disctinct emitter id in collection)
         if (empty($aggregate_root_ids = $this->extractIdsFromExpression($criteria->getWhereExpression()))) {
-            $aggregate_root_ids = $this->collection->distinct('emitter_id', $query, $options);
+            $aggregate_root_ids = $this->events->distinct('emitter_id', $query, $options);
         }
 
         // Now we have all ARs ids, we can get all events corresponding.
-        $cursor = $this->collection->find(array_merge($query, ['emitter_id' => ['$in' => $aggregate_root_ids]]), $options);
+        $cursor = $this->events->find(array_merge($query, ['emitter_id' => ['$in' => $aggregate_root_ids]]), $options);
         $events = array_map(function ($document) {
             $event = json_decode(json_encode($document), true);
 
             return $event['name']::recordFromArray($event);
         }, $cursor->toArray());
 
-        // Rebuild all ARs asked with events and collect them into a domain collection
-        if (!empty($events)) {
-            // Rebuild all ARs
-            $aggregate_roots = array_map(function ($aggregate_root_id) use ($class_name, $events) {
-                return $this->rebuildAggregateRoot($class_name, $aggregate_root_id, $events);
-            }, $aggregate_root_ids);
-
-            // Filter the collection with criteria parameter
-            $collection = $class_name::collection($aggregate_roots)->matching($criteria);
-        } else {
-            $collection = $class_name::collection();
+        // If we have no events, we return an empty collection
+        if (empty($events)) {
+            return $class_name::collection();
         }
 
-        // Return the collection which contain all AR o/
-        return $collection;
+        // Rebuild all ARs
+        $aggregate_roots = array_map(function ($aggregate_root_id) use ($class_name, $events) {
+            // Fetch all events corresponding with the AR ID, and rebuild it !
+            return $class_name::rebuildFromEvents(array_filter($events, function ($event) use ($aggregate_root_id) {
+                return $event->getEmitterId()->toString() == $aggregate_root_id;
+            }));
+        }, $aggregate_root_ids);
+
+        // Filter the collection with criteria parameter
+        return $class_name::collection($aggregate_roots)->matching($criteria);
     }
 
     /**
@@ -131,42 +131,19 @@ class EventStore implements Storage
     }
 
     /**
-     * Rebuild model.
-     */
-    private function rebuildAggregateRoot(string $class_name, string $aggregate_root_id, array $events) : AggregateRoot
-    {
-        // Initialize an empty model (without call construct because it has to be
-        // initialized like an empty shell)
-        $reflection     = new ReflectionClass($class_name);
-        $aggregate_root = $reflection->newInstanceWithoutConstructor();
-
-        // Filter events to keep only AR events
-        $events = array_filter($events, function ($event) use ($aggregate_root_id) {
-            return $event->getEmitterId()->toString() == $aggregate_root_id;
-        });
-
-        // Fire all events against the model
-        foreach ($events as $event) {
-            $aggregate_root->handle($event);
-        }
-
-        return $aggregate_root;
-    }
-
-    /**
-     * Upgrade event.
+     * Upgrade event version.
      */
     public function upgradeEvent(string $deprecated_event_name, callable $callable) : void
     {
         $deprecated_events_query = [['name' => $deprecated_event_name]];
 
-        $deprecated_events = $this->collection->find($deprecated_events_query);
+        $deprecated_events = $this->events->find($deprecated_events_query);
 
         $new_events = array_map($callable, $deprecated_events);
 
-        $this->collection->deleteMany($deprecated_events_query);
+        $this->events->deleteMany($deprecated_events_query);
 
-        $this->collection->insertMany(array_map(function ($event) {
+        $this->events->insertMany(array_map(function ($event) {
             return $event->toArray();
         }, $new_events));
     }
@@ -176,6 +153,7 @@ class EventStore implements Storage
      */
     public function update(AggregateRoot $aggregate_root) : AggregateRoot
     {
+        // Event store manage in the same way the insert and update operations
         return $this->insert($aggregate_root);
     }
 
@@ -184,9 +162,13 @@ class EventStore implements Storage
      */
     public function delete($class_name, Criteria $criteria = null) : Collection
     {
+        // We get all ARs corresponding with criteria
         $aggregate_roots = $this->select($class_name, $criteria);
 
-        // TODO: Fire delete event to all ARs
+        // Delete all ARs events in the event store
+        foreach ($aggregate_roots as $aggregate_root) {
+            $this->events->deleteMany(['emitter_id' => $aggregate_root->getId()->toString()]);
+        }
 
         return $aggregate_roots;
     }
