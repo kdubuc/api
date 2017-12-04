@@ -19,28 +19,6 @@ class Fractal extends ServiceProvider
 
             return $fractal;
         };
-
-        $container['fractal.geojson'] = function () {
-            $fractal = new FractalManager();
-            $fractal->setSerializer(new class() extends FractalSerializer {
-                public function item($resourceKey, array $data)
-                {
-                    return array_merge(['type' => 'Feature'], $data);
-                }
-
-                public function collection($resourceKey, array $data)
-                {
-                    return [
-                        'type'     => 'FeatureCollection',
-                        'features' => array_map(function ($feature) {
-                            return $this->item(null, $feature);
-                        }, $data),
-                    ];
-                }
-            });
-
-            return $fractal;
-        };
     }
 
     /**
