@@ -7,6 +7,8 @@ use Datetime as DatetimeBase;
 
 class Datetime extends ValueObject
 {
+    const RFC3339_EXTENDED_V2 = 'Y-m-d\TH:i:s.uP';
+
     protected $datetime;
 
     /**
@@ -31,7 +33,7 @@ class Datetime extends ValueObject
     public function normalize() : array
     {
         return [
-            'iso8601'    => $this->datetime->format('Y-m-d\TH:i:s.uP'),
+            'iso8601'    => $this->datetime->format(self::RFC3339_EXTENDED_V2),
             'class_name' => get_class($this),
         ];
     }
@@ -41,7 +43,7 @@ class Datetime extends ValueObject
      */
     public static function denormalize(array $data) : Normalizable
     {
-        $datetime = DatetimeBase::createFromFormat('Y-m-d\TH:i:s.uP', $data['iso8601']);
+        $datetime = DatetimeBase::createFromFormat(self::RFC3339_EXTENDED_V2, $data['iso8601']);
 
         return new self($datetime);
     }
