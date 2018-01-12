@@ -25,7 +25,7 @@ abstract class Event extends BaseEvent
     /**
      * Set the Emitter Id.
      */
-    public function setEmitterId(ID $emitter_id) : Event
+    public function setEmitterId(ID $emitter_id) : self
     {
         if (!empty($this->emitter_id)) {
             throw new Exception('Change emitter id is not allowed');
@@ -47,7 +47,7 @@ abstract class Event extends BaseEvent
     /**
      * Set the emitter class name.
      */
-    public function setEmitterClassName(string $emitter_class_name) : Event
+    public function setEmitterClassName(string $emitter_class_name) : self
     {
         if (!empty($this->emitter_class_name)) {
             throw new Exception('Change emitter class name is not allowed');

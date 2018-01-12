@@ -84,7 +84,7 @@ class EventStore implements Storage
         // Now we have all ARs ids, we can get all events corresponding.
         $cursor = $this->events->find(array_merge($query, ['emitter_id' => ['$in' => $aggregate_root_ids]]), $options);
         $events = array_map(function ($document) {
-            $event = json_decode(json_encode($document), true);
+            $event = json_decode(json_encode($document), JSON_OBJECT_AS_ARRAY);
 
             return $event['name']::recordFromArray($event);
         }, $cursor->toArray());

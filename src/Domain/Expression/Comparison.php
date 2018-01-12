@@ -11,7 +11,7 @@ class Comparison extends DoctrineComparison implements Expression
      * Comparison helper.
      * Accept : eq, neq, lt, lte, gt, gte.
      */
-    public static function __callStatic(string $name, array $arguments) : Comparison
+    public static function __callStatic(string $name, array $arguments) : self
     {
         $field    = $arguments['0'];
         $operator = $name;

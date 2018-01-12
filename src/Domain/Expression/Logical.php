@@ -11,7 +11,7 @@ class Logical extends CompositeExpression implements Expression
      * Logical helper.
      * Accept : and, or.
      */
-    public static function __callStatic(string $name, array $arguments) : Logical
+    public static function __callStatic(string $name, array $arguments) : self
     {
         $type       = $name;
         $expression = $arguments[0];

@@ -25,7 +25,7 @@ abstract class Entity extends ValueObject
     /**
      * Set the model id.
      */
-    public function setId(ID $id) : Entity
+    public function setId(ID $id) : self
     {
         if (!empty($this->id)) {
             throw new Exception('Unable to change ID');

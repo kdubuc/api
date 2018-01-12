@@ -39,7 +39,6 @@ class MongoDB extends Translator
     protected function translateComparison(Comparison $comparison)
     {
         // Field path using dot notation
-        // $field = $comparison->getField();
         $field = preg_replace('/data./', '', $comparison->getField(), 1);
 
         // Comparison value

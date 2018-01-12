@@ -15,7 +15,7 @@ abstract class ValueObject implements JsonSerializable, Normalizable
     /**
      * Merge with another ValueObject. Return new ValueObject (immutable).
      */
-    public function merge(ValueObject ...$value_objects) : ValueObject
+    public function merge(self ...$value_objects) : self
     {
         $patcher = function ($target, $patch) use (&$patcher) {
             if (!is_object($patch)) {
@@ -45,10 +45,10 @@ abstract class ValueObject implements JsonSerializable, Normalizable
                 throw new Exception('Error Processing Request', 1);
             }
 
-            $new_value_object = self::denormalize((array) json_decode($patcher(
-                json_encode($new_value_object->normalize(), true),
-                json_encode($value_object->normalize(), true)
-            )));
+            $new_value_object = self::denormalize(json_decode($patcher(
+                json_encode($new_value_object->normalize(), JSON_HEX_TAG),
+                json_encode($value_object->normalize(), JSON_HEX_TAG)
+            )), JSON_OBJECT_AS_ARRAY);
         }
 
         return $new_value_object;
@@ -57,7 +57,7 @@ abstract class ValueObject implements JsonSerializable, Normalizable
     /**
      * Update properties and return new ValueObject (immutable).
      */
-    public function update(array $properties) : ValueObject
+    public function update(array $properties) : self
     {
         $value_object_normalized = $this->normalize();
 
@@ -84,7 +84,7 @@ abstract class ValueObject implements JsonSerializable, Normalizable
     /**
      * Check if the value object / entity / Aggregate root is equal to another.
      */
-    public function isEqual(ValueObject $value_object) : bool
+    public function isEqual(self $value_object) : bool
     {
         return $this->normalize() === $value_object->normalize();
     }

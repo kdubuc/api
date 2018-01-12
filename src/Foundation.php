@@ -39,7 +39,7 @@ abstract class Foundation extends Slim
     /**
      * Mount sub-api as a RouteGroup prefixed on the current API foundation.
      */
-    public function mount(string $prefix, Foundation $api) : RouteGroup
+    public function mount(string $prefix, self $api) : RouteGroup
     {
         return $this->group($prefix, function () use ($api) {
             $router = $api->getKernel()->get('router');

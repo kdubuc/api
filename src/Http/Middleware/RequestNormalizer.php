@@ -24,7 +24,7 @@ class RequestNormalizer extends Middleware
         $query_string = $request->getUri()->getQuery();
 
         // If the query is empty, we return the $request unedited
-        if(empty($query_string)) {
+        if (empty($query_string)) {
             return $next($request, $response);
         }
 
@@ -36,17 +36,15 @@ class RequestNormalizer extends Middleware
 
         // Loop through each pair
         foreach ($pairs as $pair) {
-
             // Split into name and value
-            list($name, $value) = explode('=', $pair, 2);
+            [$name, $value] = explode('=', $pair, 2);
 
             // If name already exists
-            if( isset($results[$name]) ) {
+            if (isset($results[$name])) {
                 // Stick multiple values into an array
-                if( is_array($results[$name]) ) {
+                if (is_array($results[$name])) {
                     $results[$name][] = $value;
-                }
-                else {
+                } else {
                     $results[$name] = [$results[$name], $value];
                 }
             }

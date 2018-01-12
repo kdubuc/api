@@ -14,7 +14,7 @@ abstract class Message implements JsonSerializable
     /**
      * Record new message.
      */
-    public static function recordFromArray(array $data) : Message
+    public static function recordFromArray(array $data) : self
     {
         $id          = $data['id'];
         $recorded_on = Datetime::createFromFormat('Y-m-d\TH:i:s.u', $data['record_date']);
@@ -41,7 +41,7 @@ abstract class Message implements JsonSerializable
     /**
      * Record new message.
      */
-    public static function record(string $id, DateTime $recorded_on, ...$construct_parameters) : Message
+    public static function record(string $id, DateTime $recorded_on, ...$construct_parameters) : self
     {
         $message = new static(...$construct_parameters[0]);
 
@@ -54,7 +54,7 @@ abstract class Message implements JsonSerializable
     /**
      * Record a new message with a new id and the date of the day.
      */
-    public static function recordNow(...$construct_parameters) : Message
+    public static function recordNow(...$construct_parameters) : self
     {
         return static::record(uniqid(), new Datetime(), $construct_parameters);
     }
@@ -128,7 +128,7 @@ abstract class Message implements JsonSerializable
     /**
      * Fill the message payload.
      */
-    public function fillPayload(array $data = []) : Message
+    public function fillPayload(array $data = []) : self
     {
         $attributes = self::getAttributes();
 

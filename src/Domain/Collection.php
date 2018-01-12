@@ -24,7 +24,7 @@ class Collection extends ArrayCollection implements Normalizable
     /**
      * Morph the collection into a new one.
      */
-    public function morph(string $collection_class_name) : Collection
+    public function morph(string $collection_class_name) : self
     {
         if (!class_exists($collection_class_name) || !is_a($collection_class_name, self::class, true)) {
             throw new Exception($collection_class_name." n'est pas une collection valide", 1);
@@ -100,7 +100,7 @@ class Collection extends ArrayCollection implements Normalizable
     /**
      * Matching.
      */
-    public function matching(Criteria $criteria) : Collection
+    public function matching(Criteria $criteria) : self
     {
         $collection = $this;
 

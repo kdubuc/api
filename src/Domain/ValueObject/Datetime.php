@@ -7,7 +7,7 @@ use Datetime as DatetimeBase;
 
 class Datetime extends ValueObject
 {
-    const RFC3339_EXTENDED_V2 = 'Y-m-d\TH:i:s.uP';
+    public const RFC3339_EXTENDED_V2 = 'Y-m-d\TH:i:s.uP';
 
     protected $datetime;
 

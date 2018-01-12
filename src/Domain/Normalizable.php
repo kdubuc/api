@@ -12,7 +12,7 @@ interface Normalizable
     /**
      * Build the value object from array.
      */
-    public static function denormalize(array $data) : Normalizable;
+    public static function denormalize(array $data) : self;
 
     /**
      * Query normalizable field using dot notation (https://docs.mongodb.com/manual/core/document/#document-dot-notation).

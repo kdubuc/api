@@ -2,7 +2,6 @@
 
 namespace API\Repository\Storage;
 
-use Exception;
 use API\Domain\Collection;
 use API\Domain\AggregateRoot;
 use Doctrine\Common\Collections\Criteria;

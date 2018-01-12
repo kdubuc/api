@@ -93,7 +93,7 @@ class KeyValue implements Storage
 
         // Build all aggregate roots
         $collection = $class_name::collection(array_map(function ($document) use ($class_name) {
-            $document = json_decode(json_encode($document), true);
+            $document = json_decode(json_encode($document), JSON_OBJECT_AS_ARRAY);
 
             return $class_name::denormalize($document);
         }, $cursor->toArray() ?? []));
