@@ -88,7 +88,7 @@ class Kernel extends Pimple implements Container
         $entry = $this->offsetGet($id);
 
         if (
-            ((is_scalar($entry) || gettype($entry) == 'ressource') && gettype($entry) == $instance_name_expected) ||
+            (is_scalar($entry) && gettype($entry) == $instance_name_expected) ||
             ('array' == $instance_name_expected && is_array($entry)) ||
             ($entry instanceof $instance_name_expected) ||
             ('callable' == $instance_name_expected && is_callable($entry))
