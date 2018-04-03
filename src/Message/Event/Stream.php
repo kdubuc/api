@@ -42,24 +42,25 @@ class Stream extends Emitter implements IteratorAggregate
     }
 
     /**
-     * Wait for an event.
+     * Wait for an event (based on event's name).
+     * Not async.
      */
-    public function waitFor(string $event_class_name, int $timeout = 10) : Event
+    public function waitFor(string $event_name, int $timeout = 10) : Event
     {
         // Tick rate definitions
         $tick_count = 0;
         $tick_delay = 10000;
 
         do {
-            // Wait fo tick
+            // Wait for tick
             usleep($tick_delay);
 
             // Increment the tick count
             ++$tick_count;
 
             // Get all messages dispatched with the same name
-            $messages = array_filter($this->getEventsEmitted(), function ($message) use ($event_class_name) {
-                return get_class($message) === $event_class_name;
+            $messages = array_filter($this->getEventsEmitted(), function ($message) use ($event_name) {
+                return $message->getName() === $event_name;
             });
 
             // Get the first element in the result
