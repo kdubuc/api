@@ -82,4 +82,20 @@ class Stream extends Emitter implements IteratorAggregate
     {
         return new ArrayIterator($this->getEventsEmitted());
     }
+
+    /**
+     * Affect a listener to handle multiple events.
+     */
+    public function attachListener(Listener $listener, array $events_names = []) : void
+    {
+        // If no events names are given, listen ALL events.
+        if (0 == count($events_names)) {
+            $events_names[] = '*';
+        }
+
+        // Attach listeners for all events given
+        foreach ($events_names as $event_name) {
+            $this->addListener($event_name, $listener);
+        }
+    }
 }
