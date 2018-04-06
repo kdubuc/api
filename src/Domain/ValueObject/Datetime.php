@@ -41,7 +41,7 @@ class Datetime extends ValueObject
      */
     public static function denormalize(array $data) : Normalizable
     {
-        $datetime = DatetimeBase::createFromFormat(DatetimeBase::RFC3339_EXTENDED, $data['iso8601']);
+        $datetime = DatetimeBase::createFromFormat('Y-m-d\TH:i:s.uP', $data['iso8601']);
 
         return new self($datetime);
     }
