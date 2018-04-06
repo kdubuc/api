@@ -86,7 +86,7 @@ class EventStore implements Storage
         $events = array_map(function ($document) {
             $event = json_decode(json_encode($document), JSON_OBJECT_AS_ARRAY);
 
-            return $event['name']::recordFromArray($event);
+            return $event['class_name']::recordFromArray($event);
         }, $cursor->toArray());
 
         // If we have no events, we return an empty collection
