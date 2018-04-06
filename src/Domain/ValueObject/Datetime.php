@@ -31,7 +31,7 @@ class Datetime extends ValueObject
     public function normalize() : array
     {
         return [
-            'iso8601'    => $this->datetime->format(self::RFC3339_EXTENDED),
+            'iso8601'    => $this->datetime->format(DatetimeBase::RFC3339_EXTENDED),
             'class_name' => get_class($this),
         ];
     }
@@ -41,7 +41,7 @@ class Datetime extends ValueObject
      */
     public static function denormalize(array $data) : Normalizable
     {
-        $datetime = DatetimeBase::createFromFormat(self::RFC3339_EXTENDED, $data['iso8601']);
+        $datetime = DatetimeBase::createFromFormat(DatetimeBase::RFC3339_EXTENDED, $data['iso8601']);
 
         return new self($datetime);
     }
