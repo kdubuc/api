@@ -52,12 +52,6 @@ class Stream extends Emitter implements IteratorAggregate
         $tick_delay = 10000;
 
         do {
-            // Wait for tick
-            usleep($tick_delay);
-
-            // Increment the tick count
-            ++$tick_count;
-
             // Get all messages dispatched with the same name
             $messages = array_filter($this->getEventsEmitted(), function ($message) use ($event_name) {
                 return $message->getName() === $event_name;
@@ -70,6 +64,13 @@ class Stream extends Emitter implements IteratorAggregate
             if (null !== $message) {
                 return $message;
             }
+
+            // Wait for tick
+            usleep($tick_delay);
+
+            // Increment the tick count
+            ++$tick_count;
+            
         } while ($tick_count * $tick_delay < $timeout * 1000000);
 
         throw new Exception('Timeout reached');
