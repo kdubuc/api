@@ -63,8 +63,8 @@ class Stream extends Emitter implements IteratorAggregate
                 return $message->getName() === $event_name;
             });
 
-            // Get the first element in the result
-            $message = array_shift($messages);
+            // Get the last element (most recent) in the result
+            $message = array_pop($messages);
 
             // If the element is not null, return the event !
             if (null !== $message) {
