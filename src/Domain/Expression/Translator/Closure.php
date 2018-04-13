@@ -122,7 +122,7 @@ class Closure extends Translator
 
                 case 'in':
                     $filter = function ($object) use ($value) : bool {
-                        return in_array($object, $value);
+                        return in_array($value, $object);
                     };
                     break;
 
