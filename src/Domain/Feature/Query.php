@@ -22,6 +22,12 @@ trait Query
                 $normalized = $normalized[$segment];
             } else {
                 $normalized = array_map(function ($element) use ($segment) {
+                    if (!array_key_exists($segment, $element)) {
+                        $element[$segment] = array_map(function ($part) use ($segment) {
+                            return $part[$segment];
+                        }, $element);
+                    }
+
                     return $element[$segment];
                 }, $normalized);
             }
