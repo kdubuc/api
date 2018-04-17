@@ -137,7 +137,13 @@ abstract class Http
      */
     public function pagination(Response $response, Pagerfanta $paginator, Transformer $transformer, int $status = self::STATUS_OK) : Response
     {
-        $resource = new Fractal\Resource\Collection($paginator->getCurrentPageResults(), $transformer);
+        $collection = $paginator->getCurrentPageResults();
+
+        $resource = new Fractal\Resource\Collection($collection, $transformer);
+
+        if($collection instanceof Collection) {
+            $resource->setMeta($collection->getMeta());
+        }
 
         $resource->setPaginator(new FractalPaginatorAdapter($paginator, function (int $page) {
             return null;
