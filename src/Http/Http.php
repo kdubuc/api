@@ -139,7 +139,7 @@ abstract class Http
     {
         $resource = new Fractal\Resource\Collection($paginator->getCurrentPageResults(), $transformer);
 
-        $resource->setPaginator(new FractalPaginatorAdapter($paginator, function ($page) {
+        $resource->setPaginator(new FractalPaginatorAdapter($paginator, function (int $page) {
             return null;
         }));
 
