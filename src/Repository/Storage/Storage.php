@@ -16,17 +16,17 @@ interface Storage
     /**
      * Delete values.
      */
-    public function delete($class_name, Criteria $criteria = null) : Collection;
+    public function delete($class_name, Criteria $criteria = null) : void;
 
     /**
      * Insert model.
      */
-    public function insert(AggregateRoot $aggregate_root) : AggregateRoot;
+    public function insert(AggregateRoot $aggregate_root) : void;
 
     /**
      * Update model.
      */
-    public function update(AggregateRoot $aggregate_root) : AggregateRoot;
+    public function update(AggregateRoot $aggregate_root) : void;
 
     /**
      * Count results.

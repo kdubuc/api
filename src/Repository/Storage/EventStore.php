@@ -23,7 +23,7 @@ class EventStore implements Storage
     /**
      * Insert model.
      */
-    public function insert(AggregateRoot $aggregate_root) : AggregateRoot
+    public function insert(AggregateRoot $aggregate_root) : void
     {
         // Get the AR new events to be persisted
         $events = $aggregate_root->getEventStream()->getEventsEmitted();
@@ -48,8 +48,6 @@ class EventStore implements Storage
         $this->events->insertMany(array_map(function ($event) {
             return $event->toArray();
         }, $events));
-
-        return $aggregate_root;
     }
 
     /**
@@ -151,16 +149,16 @@ class EventStore implements Storage
     /**
      * Update model.
      */
-    public function update(AggregateRoot $aggregate_root) : AggregateRoot
+    public function update(AggregateRoot $aggregate_root) : void
     {
         // Event store manage in the same way the insert and update operations
-        return $this->insert($aggregate_root);
+        $this->insert($aggregate_root);
     }
 
     /**
      * Delete values.
      */
-    public function delete($class_name, Criteria $criteria = null) : Collection
+    public function delete($class_name, Criteria $criteria = null) : void
     {
         // We get all ARs corresponding with criteria
         $aggregate_roots = $this->select($class_name, $criteria);
@@ -169,8 +167,6 @@ class EventStore implements Storage
         foreach ($aggregate_roots as $aggregate_root) {
             $this->events->deleteMany(['emitter_id' => $aggregate_root->getId()->toString()]);
         }
-
-        return $aggregate_roots;
     }
 
     /**

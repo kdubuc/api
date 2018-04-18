@@ -42,7 +42,7 @@ class KeyValue implements Storage
     /**
      * Insert model.
      */
-    public function insert(AggregateRoot $aggregate_root) : AggregateRoot
+    public function insert(AggregateRoot $aggregate_root) : void
     {
         $collection = $this->getCollectionFor($aggregate_root);
 
@@ -53,8 +53,6 @@ class KeyValue implements Storage
             $document,
             ['upsert' => true]
         );
-
-        return $aggregate_root;
     }
 
     /**
@@ -104,15 +102,15 @@ class KeyValue implements Storage
     /**
      * Update model.
      */
-    public function update(AggregateRoot $aggregate_root) : AggregateRoot
+    public function update(AggregateRoot $aggregate_root) : void
     {
-        return $this->insert($aggregate_root);
+        $this->insert($aggregate_root);
     }
 
     /**
      * Delete values.
      */
-    public function delete($class_name, Criteria $criteria = null) : Collection
+    public function delete($class_name, Criteria $criteria = null) : void
     {
         $old_collection = $this->select($class_name, $criteria);
 
@@ -120,8 +118,6 @@ class KeyValue implements Storage
             $collection = $this->getCollectionFor($aggregate_root);
             $collection->deleteOne(['id.uuid' => $aggregate_root->getId()->toString()]);
         }
-
-        return $old_collection;
     }
 
     /**

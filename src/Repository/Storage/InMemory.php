@@ -19,13 +19,11 @@ class InMemory implements Storage
     /**
      * Insert model.
      */
-    public function insert(AggregateRoot $aggregate_root) : AggregateRoot
+    public function insert(AggregateRoot $aggregate_root) : void
     {
         $class_name = get_class($aggregate_root);
 
         $this->data[$class_name][$aggregate_root->getId()->toString()] = $aggregate_root;
-
-        return $aggregate_root;
     }
 
     /**
@@ -45,23 +43,21 @@ class InMemory implements Storage
     /**
      * Update model.
      */
-    public function update(AggregateRoot $aggregate_root) : AggregateRoot
+    public function update(AggregateRoot $aggregate_root) : void
     {
-        return $this->insert($aggregate_root);
+        $this->insert($aggregate_root);
     }
 
     /**
      * Delete values.
      */
-    public function delete($class_name, Criteria $criteria = null) : Collection
+    public function delete($class_name, Criteria $criteria = null) : void
     {
         $collection = $this->select($class_name, $criteria);
 
         foreach ($collection as $aggregate_root) {
             unset($this->data[$class_name][$aggregate_root->getId()->toString()]);
         }
-
-        return $collection;
     }
 
     /**
