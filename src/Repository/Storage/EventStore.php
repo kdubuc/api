@@ -174,6 +174,12 @@ class EventStore implements Storage
      */
     public function count($class_name, Criteria $criteria = null) : int
     {
+        if (null === $criteria) {
+            $query = ['emitter_class_name' => $class_name];
+
+            return count($this->events->distinct('emitter_id', $query));
+        }
+
         return $this->select($class_name, $criteria)->count();
     }
 }
