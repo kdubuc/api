@@ -73,6 +73,18 @@ class MongoDB extends Translator
             case 'contains':
                 return [$field => ['$regex' => ".*$value.*"]];
 
+            case 'geo_within':
+                return [
+                    $field => [
+                        '$geoWithin' => [
+                            '$geometry' => [
+                                'type'        => $value['geometry']['type'],
+                                'coordinates' => $value['geometry']['coordinates'],
+                            ],
+                        ],
+                    ],
+                ];
+
             default:
                 throw new RuntimeException('Unknown comparison operator: '.$comparison->getOperator());
         }

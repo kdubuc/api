@@ -138,6 +138,13 @@ class Closure extends Translator
                     };
                     break;
 
+                case 'geo_within':
+                    // Geo Within operator disabled in Closure mode
+                    $filter = function ($object) use ($value) : bool {
+                        return true;
+                    };
+                    break;
+
                 default:
                     throw new RuntimeException('Unknown comparison operator: '.$operator);
             }
