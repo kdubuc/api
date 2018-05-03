@@ -23,19 +23,25 @@
         "php": "^7.1",
         "container-interop/container-interop": "^1.1",
         "doctrine/collections": "^1.4",
-        "doctrine/dbal": "^2.5",
         "league/event": "^2.1",
         "league/fractal": "^0.16",
         "league/tactician": "^1.0",
         "psr/cache": "^1.0",
         "ramsey/uuid": "^3.4",
         "slim/slim": "^3.3",
-        "mongodb/mongodb": "^1.1",
         "pagerfanta/pagerfanta": "^1.0"
     },
 
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^2.0"
+        "friendsofphp/php-cs-fixer": "^2.0",
+        "phpunit/phpunit": "^6.2",
+        "mongodb/mongodb": "^1.1",
+        "doctrine/dbal": "^2.5"
+    },
+
+    "suggest": {
+        "mongodb/mongodb": "Needed to support MongoDB storages",
+        "doctrine/dbal": "Needed to support DB storages"
     },
 
     "autoload": {
