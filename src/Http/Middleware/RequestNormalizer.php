@@ -24,7 +24,7 @@ class RequestNormalizer extends Middleware
         $query_string = $request->getUri()->getQuery();
 
         // If the query is empty, we return the $request unedited
-        if (empty($query_string)) {
+        if (empty($query_string) || false === strpos($query_string, '=')) {
             return $next($request, $response);
         }
 
