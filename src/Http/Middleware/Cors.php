@@ -16,6 +16,20 @@ class Cors extends Middleware
             ->withHeader('Access-Control-Allow-Headers', 'content-type, Authorization')
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS, PUT');
 
+        if($this->isPreflightRequest($request)) {
+            return $response;
+        }
+
         return $next($request, $response);
+    }
+
+    /**
+     * Detect if the actual request is a Preflisght request.
+     */
+    public function isPreflightRequest(Request $request) : bool
+    {
+        return $request->getMethod() === 'OPTIONS'
+            && $request->hasHeader('Origin')
+            && $request->hasHeader('Access-Control-Request-Method');
     }
 }
