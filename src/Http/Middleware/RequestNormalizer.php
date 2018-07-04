@@ -38,6 +38,10 @@ class RequestNormalizer extends Middleware
         foreach ($pairs as $pair) {
             // Split into name and value
             [$name, $value] = explode('=', $pair, 2);
+            
+            // URL decode
+            $name  = rawurldecode($name);
+            $value = rawurldecode($value);
 
             // If name already exists
             if (isset($results[$name])) {
