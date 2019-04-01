@@ -59,7 +59,7 @@ class RequestNormalizer extends Middleware
         }
 
         // Build the new request with the correct query string
-        $request = $request->withUri($request->getUri()->withQuery(http_build_query($results)));
+        $request = $request->withUri($request->getUri()->withQuery(http_build_query($results)))->withQueryParams($results);
 
         return $next($request, $response);
     }
