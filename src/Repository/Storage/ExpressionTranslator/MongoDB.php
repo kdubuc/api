@@ -1,6 +1,6 @@
 <?php
 
-namespace API\Repository\Storage\ExpressionVisitor;
+namespace API\Repository\Storage\ExpressionTranslator;
 
 use RuntimeException;
 use API\Domain\Expression\Logical;

@@ -68,7 +68,7 @@ class KeyValue implements Storage
         // Prepare the query filter
         $filter = [];
         if ($expression = $criteria->getWhereExpression()) {
-            $filter = ExpressionVisitor\MongoDB::translateExpression($expression);
+            $filter = ExpressionTranslator\MongoDB::translateExpression($expression);
         }
 
         // Prepare the query options
@@ -78,12 +78,12 @@ class KeyValue implements Storage
         $offset = $criteria->getFirstResult();
         $length = $criteria->getMaxResults();
         if ($offset || $length) {
-            $options += ExpressionVisitor\MongoDB::translateSlicing($length, (int) $offset);
+            $options += ExpressionTranslator\MongoDB::translateSlicing($length, (int) $offset);
         }
 
         // Ordering options
         if ($orderings = $criteria->getOrderings()) {
-            $options += ExpressionVisitor\MongoDB::translateOrderings($orderings);
+            $options += ExpressionTranslator\MongoDB::translateOrderings($orderings);
         }
 
         // Perform the query to obtain cursor
@@ -128,7 +128,7 @@ class KeyValue implements Storage
         // If there is a criteria, we filter the collection, otherwise we
         // count the collection.
         if (!empty($criteria) && $expression = $criteria->getWhereExpression()) {
-            $filter = ExpressionVisitor\MongoDB::translateExpression($expression);
+            $filter = ExpressionTranslator\MongoDB::translateExpression($expression);
 
             return $this->mongodb->$class_name->count($filter);
         }
