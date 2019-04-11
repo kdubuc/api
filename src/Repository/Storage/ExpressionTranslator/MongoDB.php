@@ -85,6 +85,18 @@ class MongoDB extends Translator
                     ],
                 ];
 
+            case 'geo_intersects':
+                return [
+                    $field => [
+                        '$geoIntersects' => [
+                            '$geometry' => [
+                                'type'        => $value['geometry']['type'],
+                                'coordinates' => $value['geometry']['coordinates'],
+                            ],
+                        ],
+                    ],
+                ];
+
             default:
                 throw new RuntimeException('Unknown comparison operator: '.$comparison->getOperator());
         }

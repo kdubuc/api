@@ -47,7 +47,7 @@ class Closure extends Translator
 
             uasort($data, $next);
 
-            $class_name = get_class($collection);
+            $class_name = \get_class($collection);
 
             return new $class_name($data);
         };
@@ -62,7 +62,7 @@ class Closure extends Translator
             $data = $collection->slice((int) $skip, $limit);
 
             return $collection->filter(function ($element) use ($data) {
-                return in_array($element, $data);
+                return \in_array($element, $data);
             });
         };
     }
@@ -122,13 +122,13 @@ class Closure extends Translator
 
                 case 'in':
                     $filter = function ($object) use ($value) : bool {
-                        return in_array($value, $object);
+                        return \in_array($value, $object);
                     };
                     break;
 
                 case 'nin':
                     $filter = function ($object) use ($value) : bool {
-                        return !in_array($object, $value);
+                        return !\in_array($object, $value);
                     };
                     break;
 
@@ -138,8 +138,10 @@ class Closure extends Translator
                     };
                     break;
 
+                // Geo Within & Intersects operator disabled in Closure mode
                 case 'geo_within':
-                    // Geo Within operator disabled in Closure mode
+                case 'geo_intersects':
+                    // Geo Intersects operator disabled in Closure mode
                     $filter = function ($object) use ($value) : bool {
                         return true;
                     };
@@ -152,7 +154,7 @@ class Closure extends Translator
             $indexes_match = array_keys(array_filter($collection->query($field), $filter));
 
             return new Collection(array_filter(array_values($collection->toArray()), function ($element, $key) use ($indexes_match) {
-                return in_array($key, $indexes_match);
+                return \in_array($key, $indexes_match);
             }, ARRAY_FILTER_USE_BOTH));
         };
     }
