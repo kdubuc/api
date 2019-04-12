@@ -17,7 +17,7 @@ class Comparison extends DoctrineComparison implements Expression
         $operator = $name;
         $value    = $arguments['1'];
 
-        if (!in_array($operator, ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in', 'nin', 'contains', 'geo_within'])) {
+        if (!in_array($operator, ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in', 'nin', 'contains', 'geo_within', 'geo_intersects'])) {
             throw new Exception('Operator invalid');
         }
 
