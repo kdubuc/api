@@ -106,4 +106,12 @@ class Kernel extends Pimple implements Container
     {
         return $this->definitions;
     }
+    
+    /**
+     * Init kernel with env values.
+     */
+    public static function loadFromEnvironment() : self
+    {
+        return new self(getenv());
+    }
 }
