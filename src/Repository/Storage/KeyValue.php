@@ -26,11 +26,7 @@ class KeyValue implements Storage
     {
         $collection_name = get_class($aggregate_root);
 
-        $collections = array_map(function ($collection) {
-            return $collection->getName();
-        }, (array) $this->mongodb->listCollections());
-
-        if (in_array($collection_name, $collections)) {
+        if (\in_array($collection_name, (array) $this->mongodb->listCollectionNames())) {
             $this->mongodb->createCollection($collection_name);
         }
 

@@ -35,7 +35,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.0",
         "phpunit/phpunit": "^6.2",
-        "mongodb/mongodb": "^1.1",
+        "mongodb/mongodb": "^1.7",
         "doctrine/dbal": "^2.5"
     },
 
