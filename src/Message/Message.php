@@ -117,7 +117,7 @@ abstract class Message implements JsonSerializable
         $method = new ReflectionMethod(get_called_class(), '__construct');
 
         $attributes = array_reduce($method->getParameters(), function ($result, $parameter) {
-            $result[$parameter->getName()] = $parameter->getType()->__toString();
+            $result[$parameter->getName()] = $parameter->getType()->getName();
 
             return $result;
         }, []);
