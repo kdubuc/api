@@ -7,7 +7,6 @@ use RuntimeException;
 use API\Domain\Collection;
 use Pagerfanta\Pagerfanta;
 use API\Feature\KernelAccess;
-use API\Transformer\Transformer;
 use API\Domain\ValueObject\ValueObject;
 use Psr\Http\Message\ResponseInterface as Response;
 use League\Fractal\Pagination\PagerfantaPaginatorAdapter as FractalPaginatorAdapter;
@@ -91,7 +90,7 @@ abstract class Http
     /**
      * Bind a collection to a transformer and start building a response.
      */
-    public function collection(Response $response, Collection $collection, Transformer $transformer, int $status = self::STATUS_OK) : Response
+    public function collection(Response $response, Collection $collection, Fractal\TransformerAbstract $transformer, int $status = self::STATUS_OK) : Response
     {
         $resource = new Fractal\Resource\Collection($collection, $transformer);
 
@@ -105,7 +104,7 @@ abstract class Http
     /**
      * Bind a model to a transformer and start building a response.
      */
-    public function item(Response $response, ValueObject $data, Transformer $transformer, int $status = self::STATUS_OK) : Response
+    public function item(Response $response, ValueObject $data, Fractal\TransformerAbstract $transformer, int $status = self::STATUS_OK) : Response
     {
         $resource = new Fractal\Resource\Item($data, $transformer);
 
@@ -135,7 +134,7 @@ abstract class Http
     /**
      * Paginate.
      */
-    public function pagination(Response $response, Pagerfanta $paginator, Transformer $transformer, int $status = self::STATUS_OK) : Response
+    public function pagination(Response $response, Pagerfanta $paginator, Fractal\TransformerAbstract $transformer, int $status = self::STATUS_OK) : Response
     {
         $collection = $paginator->getCurrentPageResults();
 
